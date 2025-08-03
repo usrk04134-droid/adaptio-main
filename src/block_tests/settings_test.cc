@@ -1,0 +1,35 @@
+#include <doctest/doctest.h>
+
+#include "helpers.h"
+#include "helpers_settings.h"
+
+const bool EXPECT_OK = true;
+
+TEST_SUITE("Settings") {
+  TEST_CASE("store_update_get") {
+    TestFixture fixture;
+
+    /* Store settings successfully */
+    auto settings = TestSettings{.use_edge_sensor = true, .edge_sensor_placement = "right"};
+    StoreSettings(fixture, settings, EXPECT_OK);
+    CheckSettingsEqual(fixture, settings);
+
+    settings = TestSettings{.use_edge_sensor = false, .edge_sensor_placement = "left"};
+    StoreSettings(fixture, settings, EXPECT_OK);
+    CheckSettingsEqual(fixture, settings);
+  }
+
+  TEST_CASE("edge_sensor_placement_values") {
+    TestFixture fixture;
+
+    /* Test left placement */
+    auto settings = TestSettings{.use_edge_sensor = true, .edge_sensor_placement = "left"};
+    StoreSettings(fixture, settings, EXPECT_OK);
+    CheckSettingsEqual(fixture, settings);
+
+    /* Test right placement */
+    settings = TestSettings{.use_edge_sensor = true, .edge_sensor_placement = "right"};
+    StoreSettings(fixture, settings, EXPECT_OK);
+    CheckSettingsEqual(fixture, settings);
+  }
+}
