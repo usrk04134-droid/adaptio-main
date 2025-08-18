@@ -46,9 +46,9 @@ class ConfigManager {
     return calibration_joint_geometry_config_;
   }
   auto GetCircWeldObjectCalib()
-      -> std::pair<std::optional<calibration::WeldObjectCalibration>, ConfigurationHandle*> = delete;
+      -> std::pair<std::optional<calibration::WeldObjectCalibration>, ConfigurationHandle*>;
   auto GetLaserTorchCalib()
-      -> std::pair<std::optional<calibration::LaserTorchCalibration>, ConfigurationHandle*> = delete;
+      -> std::pair<std::optional<calibration::LaserTorchCalibration>, ConfigurationHandle*>;
   auto GetWeldControlConfiguration() -> weld_control::Configuration { return weld_control_config_; }
   auto GetTolerancesConfiguration() -> tolerances::Configuration { return tolerances_config_; }
   auto GetCalibrationConfiguration() -> calibration::Configuration { return calibration_config_; }
