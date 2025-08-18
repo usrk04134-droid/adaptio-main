@@ -13,7 +13,6 @@ target_sources(${BLOCK_TESTS_APPLICATION}
 
     helpers.cc
     joint_tracking_test.cc
-    calibration_test.cc
     coordination_test.cc
     coordinate_systems_test.cc
     weld_data_set_test.cc

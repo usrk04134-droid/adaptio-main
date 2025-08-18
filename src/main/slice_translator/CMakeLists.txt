@@ -4,7 +4,6 @@ target_sources(${ADAPTIO_APPLICATION}
     slice_translator_impl.h
     slice_observer.h
     coordinates_translator.h
-    slice_translator_service.h
     slice_translator_service_v2.h
     model_extract.h
     model_config.h

@@ -9,7 +9,6 @@
 
 #include "bead_control/src/bead_control_impl.h"
 #include "bead_control/src/weld_position_data_storage.h"
-#include "calibration/calibration_manager_impl.h"
 #include "calibration/src/calibration_manager_v2_impl.h"
 #include "calibration/src/calibration_solver_impl.h"
 #include "common/clock_functions.h"
@@ -24,7 +23,6 @@
 #include "management/management_server.h"
 #include "scanner_client/scanner_client_impl.h"
 #include "slice_translator/coordinates_translator.h"
-#include "slice_translator/slice_translator_impl.h"
 #include "slice_translator/src/model_impl.h"
 #include "tracking/src/tracking_manager_impl.h"
 #include "web_hmi/src/service_mode_manager_impl.h"
@@ -66,10 +64,8 @@ class Application {
   std::unique_ptr<event::EventHandlerImpl> event_handler_;
   std::unique_ptr<kinematics::KinematicsClient> kinematics_client_;
   std::unique_ptr<scanner_client::ScannerClientImpl> scanner_client_;
-  std::unique_ptr<slice_translator::SliceTranslatorImpl> slice_translator_;
   std::unique_ptr<slice_translator::ModelImpl> model_impl_;
   std::unique_ptr<calibration::CalibrationSolverImpl> calibration_solver_;
-  std::unique_ptr<calibration::CalibrationManagerImpl> calibration_manager_;
   std::unique_ptr<calibration::CalibrationManagerV2Impl> calibration_manager_v2_;
   std::unique_ptr<tracking::TrackingManagerImpl> tracking_manager_;
   std::unique_ptr<slice_translator::CoordinatesTranslator> coordinates_translator_;

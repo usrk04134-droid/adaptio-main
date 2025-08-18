@@ -30,8 +30,7 @@ using configuration::ConfigManager;
 
 ConfigManager::ConfigManager(const fs::path& path_scanner_calibration)
     : path_scanner_calibration_(path_scanner_calibration) {
-  converters_.insert({TAG_CWOC, std::make_pair(fs::path(), nullptr)});
-  converters_.insert({TAG_LTC, std::make_pair(fs::path(), nullptr)});
+  // Removed legacy calibration YAML converters (CWOC/LTC)
 
   auto* factory = GetFactory();
   fh_           = factory->CreateFileHandler();
@@ -52,7 +51,7 @@ auto ConfigManager::Init(const fs::path& default_config, std::optional<fs::path>
     return result;
   }
 
-  TryCopyConfigFiles(default_config, path_data);
+  // No legacy calibration files to copy
 
   // Read user config files if any (/var/lib/adaptio)
   std::filesystem::path const top_config(path_data / "configuration.yaml");
@@ -213,23 +212,10 @@ void ConfigManager::TryCopyConfigFiles(fs::path const& default_config, fs::path 
     }
   };
 
-  try_copy_file(converters_[TAG_CWOC]);
-  try_copy_file(converters_[TAG_LTC]);
+  // legacy removed
 }
 
-auto ConfigManager::GetCircWeldObjectCalib()
-    -> std::pair<std::optional<calibration::WeldObjectCalibration>, ConfigurationHandle*> {
-  auto* converter = converters_[TAG_CWOC].second.get();
-  auto maybe_cwoc = std::any_cast<std::optional<calibration::WeldObjectCalibration>>(converter->GetConfig());
-  return std::make_pair(maybe_cwoc, converter);
-}
-
-auto ConfigManager::GetLaserTorchCalib()
-    -> std::pair<std::optional<calibration::LaserTorchCalibration>, ConfigurationHandle*> {
-  auto* converter = converters_[TAG_LTC].second.get();
-  auto maybe_ltc  = std::any_cast<std::optional<calibration::LaserTorchCalibration>>(converter->GetConfig());
-  return std::make_pair(maybe_ltc, converter);
-}
+// Legacy calibration YAML accessors removed
 
 auto ConfigManager::GetScannerCalibration(const std::string& scanner_serial_number)
     -> std::optional<scanner::ScannerCalibrationData> {

@@ -25,8 +25,8 @@ namespace fs = std::filesystem;
 
 const std::string TAG_CONF = "configuration";
 const std::string TAG_SC   = "scanner_calibration";
-const std::string TAG_CWOC = "circular_weld_object_calibration";
-const std::string TAG_LTC  = "laser_torch_calibration";
+const std::string TAG_CWOC = "circular_weld_object_calibration"; // deprecated
+const std::string TAG_LTC  = "laser_torch_calibration";          // deprecated
 
 class ConfigManager {
  public:
@@ -45,8 +45,10 @@ class ConfigManager {
   auto GetCalibrationFixtureJointGeometry() -> joint_geometry::JointGeometry {
     return calibration_joint_geometry_config_;
   }
-  auto GetCircWeldObjectCalib() -> std::pair<std::optional<calibration::WeldObjectCalibration>, ConfigurationHandle*>;
-  auto GetLaserTorchCalib() -> std::pair<std::optional<calibration::LaserTorchCalibration>, ConfigurationHandle*>;
+  auto GetCircWeldObjectCalib()
+      -> std::pair<std::optional<calibration::WeldObjectCalibration>, ConfigurationHandle*> = delete;
+  auto GetLaserTorchCalib()
+      -> std::pair<std::optional<calibration::LaserTorchCalibration>, ConfigurationHandle*> = delete;
   auto GetWeldControlConfiguration() -> weld_control::Configuration { return weld_control_config_; }
   auto GetTolerancesConfiguration() -> tolerances::Configuration { return tolerances_config_; }
   auto GetCalibrationConfiguration() -> calibration::Configuration { return calibration_config_; }

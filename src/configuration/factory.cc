@@ -44,11 +44,7 @@ void SetFactoryGenerator(std::function<Factory *()> generator) { s_generator = s
 auto FactoryImpl::CreateConverter(const std::string &tag, const std::filesystem::path &file) -> ConverterPtr {
   ConverterPtr converter;
 
-  if (tag == TAG_CWOC) {
-    converter = std::make_unique<CircWeldObjectCalibConverter>(tag, file);
-  } else if (tag == TAG_LTC) {
-    converter = std::make_unique<LaserTorchCalibConverter>(tag, file);
-  } else if (tag == TAG_SC) {
+  if (tag == TAG_SC) {
     converter = std::make_unique<ScannerCalibrationConverter>(tag, file);
   }
 

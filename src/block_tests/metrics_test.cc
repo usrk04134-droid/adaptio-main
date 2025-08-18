@@ -12,14 +12,7 @@ TEST_SUITE("Metrics") {
   TEST_CASE("metrics_collect") {
     TestFixture fixture;
 
-    // Starting calibration will increase counter
-    nlohmann::json payload({
-        {"offset",   40.0},
-        {"angle",    0.4 },
-        {"stickout", 20.0}
-    });
-    auto start_cal = web_hmi::CreateMessage("LaserToTorchCalibration", payload);
-    fixture.WebHmiIn()->DispatchMessage(std::move(start_cal));
+    // Starting legacy calibration removed; keep metrics test for other metrics if needed
 
     // Collect metrics and check counter
     auto collected = fixture.Sut()->Registry()->Collect();
