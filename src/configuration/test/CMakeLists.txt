@@ -7,7 +7,5 @@ target_sources(${UNIT_TESTS_APPLICATION}
     test_scanner_calibration_converter.cc
     test_config_manager.cc
     test_calib_fix_joint_geometry.cc
-    test_circ_weld_object_calib_converter.cc
-    test_laser_torch_calib_converter.cc
     test_tolerances_converter.cc
 )

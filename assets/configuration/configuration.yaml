@@ -1,6 +1,3 @@
-circular_weld_object_calibration: /var/lib/adaptio/circular_weld_object_calibration.yaml
-laser_torch_calibration: /var/lib/adaptio/laser_torch_calibration.yaml
-
 controller:
   # Selects the type of controller
   # Possible values: pn_driver, simulation

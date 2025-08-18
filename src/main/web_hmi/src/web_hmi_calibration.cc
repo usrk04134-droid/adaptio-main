@@ -24,11 +24,20 @@ WebHmiCalibration::WebHmiCalibration(zevs::CoreSocket* socket, calibration::Cali
       calibration_manager_(calibration_manager),
       joint_geometry_provider_(joint_geometry_provider),
       activity_status_(activity_status) {
-  calibration_manager->SetObserver(this);
+  if (calibration_manager_) {
+    calibration_manager_->SetObserver(this);
+  }
 }
 
 void WebHmiCalibration::OnMessage(const std::string& message_name, const nlohmann::json& payload) {
   if (message_name == "LaserToTorchCalibration") {
+    if (!calibration_manager_) {
+      LOG_ERROR("Legacy calibration manager not available - LaserToTorchCalibration not supported");
+      auto payload = LaserTorchCalibrationToPayload(false, {});
+      auto message = CreateMessage("LaserToTorchCalibrationRsp", payload);
+      socket_->SendWithEnvelope(ADAPTIO_IO, std::move(message));
+      return;
+    }
     if (!activity_status_->IsIdle()) {
       // In this version do nothing except log
       LOG_ERROR("Cannot start LaserToTorchCalibration - busy with status: {}", activity_status_->ToString());
@@ -44,6 +53,12 @@ void WebHmiCalibration::OnMessage(const std::string& message_name, const nlohman
     activity_status_->Set(coordination::ActivityStatusE::LASER_TORCH_CALIBRATION);
 
   } else if (message_name == "GetLaserToTorchCalibration") {
+    if (!calibration_manager_) {
+      auto payload = LaserTorchCalibrationToPayload(false, {});
+      auto message = CreateMessage("GetLaserToTorchCalibrationRsp", payload);
+      socket_->SendWithEnvelope(ADAPTIO_IO, std::move(message));
+      return;
+    }
     auto calibration = calibration_manager_->GetLaserToTorchCalibration();
     bool valid       = false;
     if (calibration) {
@@ -55,6 +70,12 @@ void WebHmiCalibration::OnMessage(const std::string& message_name, const nlohman
     auto message = CreateMessage("GetLaserToTorchCalibrationRsp", payload);
     socket_->SendWithEnvelope(ADAPTIO_IO, std::move(message));
   } else if (message_name == "SetLaserToTorchCalibration") {
+    if (!calibration_manager_) {
+      auto payload = ResultPayload(false);
+      auto message = CreateMessage("SetLaserToTorchCalibrationRsp", payload);
+      socket_->SendWithEnvelope(ADAPTIO_IO, std::move(message));
+      return;
+    }
     if (!activity_status_->IsIdle()) {
       // In this version do nothing except log
       LOG_ERROR("Cannot set LaserToTorchCalibration - busy with status: {}", activity_status_->ToString());
@@ -66,6 +87,13 @@ void WebHmiCalibration::OnMessage(const std::string& message_name, const nlohman
     auto message     = CreateMessage("SetLaserToTorchCalibrationRsp", payload);
     socket_->SendWithEnvelope(ADAPTIO_IO, std::move(message));
   } else if (message_name == "WeldObjectCalibration") {
+    if (!calibration_manager_) {
+      LOG_ERROR("Legacy calibration manager not available - WeldObjectCalibration not supported");
+      auto payload = WeldObjectCalibrationToPayload(false, {});
+      auto message = CreateMessage("WeldObjectCalibrationRsp", payload);
+      socket_->SendWithEnvelope(ADAPTIO_IO, std::move(message));
+      return;
+    }
     if (!activity_status_->IsIdle()) {
       LOG_ERROR("Cannot start WeldObjectCalibration - busy with status: {}", activity_status_->ToString());
       auto payload = WeldObjectCalibrationToPayload(false, {});
@@ -86,6 +114,12 @@ void WebHmiCalibration::OnMessage(const std::string& message_name, const nlohman
 
     activity_status_->Set(coordination::ActivityStatusE::WELD_OBJECT_CALIBRATION);
   } else if (message_name == "GetWeldObjectCalibration") {
+    if (!calibration_manager_) {
+      auto payload = WeldObjectCalibrationToPayload(false, {});
+      auto message = CreateMessage("GetWeldObjectCalibrationRsp", payload);
+      socket_->SendWithEnvelope(ADAPTIO_IO, std::move(message));
+      return;
+    }
     auto calibration = calibration_manager_->GetWeldObjectCalibration();
     bool valid       = false;
     if (calibration) {
@@ -98,6 +132,12 @@ void WebHmiCalibration::OnMessage(const std::string& message_name, const nlohman
     socket_->SendWithEnvelope(ADAPTIO_IO, std::move(message));
 
   } else if (message_name == "SetWeldObjectCalibration") {
+    if (!calibration_manager_) {
+      auto payload = ResultPayload(false);
+      auto message = CreateMessage("SetWeldObjectCalibrationRsp", payload);
+      socket_->SendWithEnvelope(ADAPTIO_IO, std::move(message));
+      return;
+    }
     auto calibration = WeldObjectCalibrationFromPayload(payload);
     auto result      = calibration_manager_->SetWeldObjectCalibration(calibration);
     auto payload     = ResultPayload(result);

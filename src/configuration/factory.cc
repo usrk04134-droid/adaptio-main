@@ -7,13 +7,11 @@
 #include <utility>
 
 #include "common/logging/application_log.h"
-#include "configuration/circ_weld_object_calib_converter.h"
 #include "configuration/conf_factory.h"
 #include "configuration/conf_file_handler.h"
 #include "configuration/config_manager.h"
 #include "configuration/converter.h"
 #include "configuration/file_handler.h"
-#include "configuration/laser_torch_calib_converter.h"
 #include "scanner_calibration_converter.h"
 
 namespace configuration {
@@ -44,11 +42,7 @@ void SetFactoryGenerator(std::function<Factory *()> generator) { s_generator = s
 auto FactoryImpl::CreateConverter(const std::string &tag, const std::filesystem::path &file) -> ConverterPtr {
   ConverterPtr converter;
 
-  if (tag == TAG_CWOC) {
-    converter = std::make_unique<CircWeldObjectCalibConverter>(tag, file);
-  } else if (tag == TAG_LTC) {
-    converter = std::make_unique<LaserTorchCalibConverter>(tag, file);
-  } else if (tag == TAG_SC) {
+  if (tag == TAG_SC) {
     converter = std::make_unique<ScannerCalibrationConverter>(tag, file);
   }
 

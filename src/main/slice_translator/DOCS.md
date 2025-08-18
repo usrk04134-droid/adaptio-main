@@ -6,9 +6,9 @@ left to right direction
 package slice_translator {
   package calibration {
     interface "CalibrationManager" as calibration::CalibrationManager
-    class "CalibrationManagerImpl" as calibration::CalibrationManagerImpl
+    class "CalibrationManagerV2Impl" as calibration::CalibrationManagerV2Impl
 
-    calibration::CalibrationManager <|-- calibration::CalibrationManagerImpl
+    calibration::CalibrationManager <|-- calibration::CalibrationManagerV2Impl
   }
 
   class "SliceTranslator" as slice_translator::SliceTranslator
