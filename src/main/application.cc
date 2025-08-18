@@ -191,7 +191,7 @@ auto Application::Run(const std::string& event_loop_name, const std::string& end
     this->Exit();
   };
   management_server_ = std::make_unique<management::ManagementServer>(
-      management_socket_.get(), joint_geometry_provider_.get(), activity_status_.get(), calibration_manager_.get(),
+      management_socket_.get(), joint_geometry_provider_.get(), activity_status_.get(), nullptr,
       calibration_manager_v2_.get(), weld_control_.get(), shutdown_handler);
 
   coordinates_translator_->AddObserver(weld_control_.get());

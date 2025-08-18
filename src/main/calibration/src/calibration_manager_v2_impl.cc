@@ -482,6 +482,17 @@ void CalibrationManagerV2Impl::HandleRightTouchFailure(const std::string& reason
   StopCalibration();
 }
 
+void CalibrationManagerV2Impl::OnWeldObjectCalStop() {
+  LOG_INFO("WeldObjectCalStop received");
+  if (activity_status_->Get() == coordination::ActivityStatusE::WELD_OBJECT_CALIBRATION) {
+    StopCalibration();
+    web_hmi_->Send("WeldObjectCalStopRsp", SUCCESS_PAYLOAD);
+  } else {
+    LOG_INFO("WeldObjectCalStop received when not in calibration mode");
+    web_hmi_->Send("WeldObjectCalStopRsp", FAILURE_PAYLOAD);
+  }
+}
+
 auto CalibrationManagerV2Impl::CalculateTopCenter() -> std::optional<macs::Point> {
   const auto& joint_geometry = calibration_ctx_.joint_geometry;
   const auto& left_obs       = calibration_ctx_.left;
