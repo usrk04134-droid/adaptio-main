@@ -10,7 +10,7 @@
 #include <utility>
 
 #include "../web_hmi_json_helpers.h"
-#include "calibration/calibration_manager.h"
+#include "calibration/src/calibration_manager_v2_impl.h"
 #include "common/logging/application_log.h"
 #include "common/zevs/zevs_core.h"
 #include "coordination/activity_status.h"
@@ -33,7 +33,7 @@ const std::string ADAPTIO_IO = "adaptio_io";
 using web_hmi::WebHmiServer;
 
 WebHmiServer::WebHmiServer(zevs::CoreSocket* in_socket, zevs::CoreSocket* out_socket,
-                           calibration::CalibrationManager* calibration_manager,
+                           calibration::CalibrationManagerV2Impl* /*calibration_manager_v2*/,
                            joint_geometry::JointGeometryProvider* joint_geometry_provider,
                            kinematics::KinematicsClient* kinematics_client,
                            coordination::ActivityStatus* activity_status)
@@ -45,8 +45,8 @@ WebHmiServer::WebHmiServer(zevs::CoreSocket* in_socket, zevs::CoreSocket* out_so
   auto handler = [this](zevs::MessagePtr msg) { this->OnMessage(std::move(msg)); };
   in_socket_->SetHandler(handler);
 
-  calibration_ =
-      std::make_unique<WebHmiCalibration>(out_socket_, calibration_manager, joint_geometry_provider, activity_status_);
+  // Legacy WebHmiCalibration removed; v2 registers handlers itself via WebHMI instance
+  (void)joint_geometry_provider; // avoid unused warning when compiled without legacy paths
 }
 
 auto WebHmiServer::CheckSubscribers(std::string const& topic, nlohmann::json const& payload) -> bool {

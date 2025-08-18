@@ -1,6 +1,6 @@
 import time
 from message import Receiver, Sender, LoopUntil
-from message_factory import (WeldObjectCalibration, GetAdaptioVersion, SetJointGeometry)
+from message_factory import (GetAdaptioVersion, SetJointGeometry, WeldObjectCalStart, WeldObjectCalLeftPos, WeldObjectCalRightPos, WeldObjectCalGet)
 
 def test_calibration(zmq_sockets, adaptio_app, config_file):
     time.sleep(1)
@@ -37,25 +37,43 @@ def test_calibration(zmq_sockets, adaptio_app, config_file):
     else:
         assert False, "SetJointGeometry failed"
 
-    # WeldObject Calibration
-    wo_cal_msg = WeldObjectCalibration()
-    wo_cal_msg["payload"]["radius"] = 4000.
-    wo_cal_msg["payload"]["stickout"] = 20
+    # Start calibration (v2)
+    start_msg = WeldObjectCalStart()
+    start_msg["payload"]["wireDiameter"] = 4.0
+    start_msg["payload"]["stickout"] = 25.0
+    start_msg["payload"]["weldObjectRadius"] = 4000.0
+    sender.send(start_msg)
 
-    sender.send(wo_cal_msg)
-
-    # Wait for WeldObjectCalibrationRsp
-    for _ in LoopUntil(10.0):
-        if receiver.verify("WeldObjectCalibrationRsp",
-                           lambda payload: payload["valid"] is True):
-            assert True, "WeldObjectCalibrationRsp received"
+    for _ in LoopUntil(5.0):
+        if receiver.verify("WeldObjectCalStartRsp", lambda payload: payload["result"] == "ok"):
             break
     else:
-        assert False, "WeldObjectCalibrationRsp not received"
+        assert False, "WeldObjectCalStartRsp not received"
+
+    sender.send(WeldObjectCalLeftPos())
+    for _ in LoopUntil(5.0):
+        if receiver.verify("WeldObjectCalLeftPosRsp", lambda payload: payload["result"] == "ok"):
+            break
+    else:
+        assert False, "WeldObjectCalLeftPosRsp not received"
+
+    sender.send(WeldObjectCalRightPos())
+    for _ in LoopUntil(5.0):
+        if receiver.verify("WeldObjectCalRightPosRsp", lambda payload: payload["result"] == "ok"):
+            break
+    else:
+        assert False, "WeldObjectCalRightPosRsp not received"
+
+    sender.send(WeldObjectCalGet())
+    for _ in LoopUntil(5.0):
+        rsp = receiver.poll_specific("WeldObjectCalGetRsp")
+        if rsp is not None:
+            payload = rsp["payload"]
+            assert payload["result"] == "ok"
+            break
+    else:
+        assert False, "WeldObjectCalGetRsp not received"
 
     time.sleep(1)
-    assert True, "WeldObjectCalibration test completed"
-
     adaptio_app.quit(None)
-
     time.sleep(5)

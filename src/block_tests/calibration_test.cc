@@ -93,60 +93,7 @@ TEST_SUITE("Calibration") {
 
     CheckJointGeometryParamsEqual(fixture, payload);
   }
-  TEST_CASE("perform_laser_to_torch_calibration") {
-    TestFixture fixture;
-    // Get the original values for comparison later
-    auto org_calibration = GetLaserToTorchCalibration(fixture);
-
-    StoreDefaultJointGeometryParams(fixture);
-
-    // Start calibration
-    nlohmann::json payload_lt({
-        {"offset",   40.0},
-        {"angle",    0.4 },
-        {"stickout", 20.0}
-    });
-    auto start_cal = web_hmi::CreateMessage("LaserToTorchCalibration", payload_lt);
-    fixture.WebHmiIn()->DispatchMessage(std::move(start_cal));
-
-    // Receive Start on Scanner
-    CHECK(fixture.Scanner()->Receive<common::msg::scanner::Start>());
-
-    // ABW points on scanner interface
-    fixture.Scanner()->Dispatch(fixture.ScannerData()->Get());
-
-    // Receive GetPosition
-    auto get_position = fixture.Kinematics()->Receive<common::msg::kinematics::GetSlidesPosition>();
-    CHECK(get_position);
-
-    // Dispatch GetPositionRsp
-    fixture.Kinematics()->Dispatch(common::msg::kinematics::GetSlidesPositionRsp{.client_id  = get_position->client_id,
-                                                                                 .time_stamp = get_position->time_stamp,
-                                                                                 .horizontal = -20,
-                                                                                 .vertical   = 5});
-
-    // Receive Stop
-    CHECK(fixture.Scanner()->Receive<common::msg::scanner::Stop>());
-
-    // Receive LaserToTorchCalibrationRsp
-    auto calibration_rsp_payload = ReceiveJsonByName(fixture, "LaserToTorchCalibrationRsp");
-    CHECK(calibration_rsp_payload != nullptr);
-    auto calibration_data = LaserTorchCalibrationFromPayload(calibration_rsp_payload);
-
-    REQUIRE(calibration_data.x == doctest::Approx(0.0));
-    REQUIRE(calibration_data.y == doctest::Approx(40.0));
-    REQUIRE(calibration_data.z == doctest::Approx(-20.0));
-    REQUIRE(calibration_data.angle == doctest::Approx(0.4));
-
-    // Get the active calibration and check that it has not changed
-    // the active calibration is only changed with a Set operation.
-    auto active_calibration = GetLaserToTorchCalibration(fixture);
-
-    REQUIRE(org_calibration.x == doctest::Approx(active_calibration.x));
-    REQUIRE(org_calibration.y == doctest::Approx(active_calibration.y));
-    REQUIRE(org_calibration.z == doctest::Approx(active_calibration.z));
-    REQUIRE(org_calibration.angle == doctest::Approx(active_calibration.angle));
-  }
+  // Removed legacy v1 calibration flow; covered by calibration_v2_test.cc
 
   TEST_CASE("set_weld_object_calibration_not_allowed_when_arcing") {
     TestFixture fixture;

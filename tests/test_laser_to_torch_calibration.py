@@ -1,6 +1,6 @@
 import time
 from message import Receiver, Sender, LoopUntil
-from message_factory import (LaserToTorchCalibration, GetAdaptioVersion)
+from message_factory import (LaserTorchCalSet, LaserTorchCalGet, GetAdaptioVersion)
 
 def test_calibration(zmq_sockets, adaptio_app, config_file):
     time.sleep(1)
@@ -27,26 +27,32 @@ def test_calibration(zmq_sockets, adaptio_app, config_file):
     else:
         assert False, "GetAdaptioVersion not received"
 
-    # LaserToTorch Calibration
-    ltt_cal_msg = LaserToTorchCalibration()
-    ltt_cal_msg["payload"]["offset"] = 5.
-    ltt_cal_msg["payload"]["angle"] = 0.5
-    ltt_cal_msg["payload"]["stickout"] = 20
+    # Set and Get LaserTorch calibration via v2
+    set_msg = LaserTorchCalSet()
+    set_msg["payload"]["distanceLaserTorch"] = 150.0
+    set_msg["payload"]["stickout"] = 25.0
+    set_msg["payload"]["scannerMountAngle"] = 0.26
+    sender.send(set_msg)
 
-    sender.send(ltt_cal_msg)
-
-    # Wait for LaserToTorchCalibrationRsp
-    for _ in LoopUntil(10.0):
-        if receiver.verify("LaserToTorchCalibrationRsp",
-                           lambda payload: payload["valid"] is True):
-            assert True, "LaserToTorchCalibrationRsp received"
+    for _ in LoopUntil(5.0):
+        if receiver.verify("LaserTorchCalSetRsp", lambda payload: payload["result"] == "ok"):
             break
     else:
-        assert False, "LaserToTorchCalibrationRsp not received"
+        assert False, "LaserTorchCalSetRsp not received"
+
+    sender.send(LaserTorchCalGet())
+    for _ in LoopUntil(5.0):
+        rsp = receiver.poll_specific("LaserTorchCalGetRsp")
+        if rsp is not None:
+            payload = rsp["payload"]
+            assert payload["result"] == "ok"
+            assert payload["distanceLaserTorch"] == 150.0
+            assert payload["stickout"] == 25.0
+            assert payload["scannerMountAngle"] == 0.26
+            break
+    else:
+        assert False, "LaserTorchCalGetRsp not received"
 
     time.sleep(1)
-    assert True, "LaserToTorchCalibration test completed"
-
     adaptio_app.quit(None)
-
     time.sleep(5)

@@ -1,6 +1,3 @@
-circular_weld_object_calibration: circular_weld_object_calibration.yaml
-laser_torch_calibration: laser_torch_calibration.yaml
-
 controller:
   # Selects the type of controller
   # Possible values: pn_driver, simulation
@@ -49,6 +46,7 @@ image_logging:
   # - off: no image logging
   # - direct: image logging on when JT or ABP is active.
   # - on_error: image logging when image processing fails and JT or ABP is active.
+  # - on_error_welding: same as 'on_error' but only active when welding.
   mode: off
   # override the default path for image logging output.
   # override_log_path:
