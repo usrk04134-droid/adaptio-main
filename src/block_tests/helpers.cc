@@ -38,9 +38,29 @@ ApplicationWrapper::ApplicationWrapper(SQLite::Database* database,
   configuration_ = std::make_unique<ConfigManager>("");
   std::optional<std::filesystem::path> config_file;
 
-  auto default_config = std::filesystem::current_path() / "tests/configs/sil/configuration.yaml";
+  // Resolve config path robustly by searching upwards for tests/configs/sil/configuration.yaml
+  auto resolve_config = []() -> std::filesystem::path {
+    namespace fs = std::filesystem;
+    fs::path rel{"tests/configs/sil/configuration.yaml"};
+    fs::path dir = fs::current_path();
+    for (int i = 0; i < 6; ++i) {
+      fs::path candidate = dir / rel;
+      if (fs::exists(candidate)) {
+        return candidate;
+      }
+      if (!dir.has_parent_path()) {
+        break;
+      }
+      dir = dir.parent_path();
+    }
+    return fs::current_path() / rel;  // fallback
+  };
+  auto default_config = resolve_config();
   if (!test_config_file.empty()) {
-    config_file = std::filesystem::current_path().string() / test_config_file;
+    // if relative, resolve relative to the directory we found default_config in
+    auto base = default_config.parent_path();
+    auto candidate = base / test_config_file;
+    config_file = candidate;
   }
 
   if (configuration_->Init(default_config, config_file, default_config.parent_path()) != boost::outcome_v2::success()) {
@@ -54,7 +74,13 @@ ApplicationWrapper::ApplicationWrapper(SQLite::Database* database,
                                                steady_clock_now_func_, registry_.get(), -1);
 }
 
-void ApplicationWrapper::Start() { application_->Run("Application", "adaptio"); }
+void ApplicationWrapper::Start() {
+  if (!application_) {
+    LOG_ERROR("Application not initialized - configuration init likely failed");
+    return;
+  }
+  application_->Run("Application", "adaptio");
+}
 
 auto ApplicationWrapper::InShutdown() const -> bool { return application_->InShutdown(); }
 
