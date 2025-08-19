@@ -11,7 +11,6 @@
 #include "bead_control/src/bead_control_impl.h"
 #include "bead_control/src/weld_position_data_storage.h"
 #include "calibration/calibration_configuration.h"
-#include "calibration/calibration_manager_impl.h"
 #include "calibration/src/calibration_manager_v2_impl.h"
 #include "calibration/src/calibration_solver_impl.h"
 #include "cli_handler/log_level_cli.h"
@@ -29,7 +28,6 @@
 #include "management/management_server.h"
 #include "scanner_client/scanner_client_impl.h"
 #include "slice_translator/coordinates_translator.h"
-#include "slice_translator/slice_translator_impl.h"
 #include "slice_translator/src/model_impl.h"
 #include "tracking/src/tracking_manager_impl.h"
 #include "tracking/tracking_manager.h"
@@ -86,11 +84,7 @@ auto Application::Run(const std::string& event_loop_name, const std::string& end
   weld_system_client_socket_->Connect(fmt::format("inproc://{}/weld-system", endpoint_base_url));
   weld_system_client_ = std::make_unique<weld_system::WeldSystemClientImpl>(weld_system_client_socket_.get());
 
-  // SliceTranslator
-  auto laser_config         = configuration_->GetLaserTorchCalib();
-  auto weld_sequence_config = configuration_->GetCircWeldObjectCalib();
-  slice_translator_         = std::make_unique<slice_translator::SliceTranslatorImpl>(
-      laser_config.first, laser_config.second, weld_sequence_config.first, weld_sequence_config.second);
+  // SliceTranslator V2 only
   model_impl_ = std::make_unique<slice_translator::ModelImpl>();
 
   // CoordinationStatus
@@ -101,7 +95,7 @@ auto Application::Run(const std::string& event_loop_name, const std::string& end
 
   // CoordinatesTranslator
   coordinates_translator_ =
-      std::make_unique<slice_translator::CoordinatesTranslator>(slice_translator_.get(), model_impl_.get());
+      std::make_unique<slice_translator::CoordinatesTranslator>(model_impl_.get());
   scanner_client_->AddObserver(coordinates_translator_.get());
 
   // Management socket
@@ -119,14 +113,10 @@ auto Application::Run(const std::string& event_loop_name, const std::string& end
 
   joint_geometry_provider_ = std::make_unique<joint_geometry::JointGeometryProviderImpl>(configuration_, database_);
 
-  // CalibrationManager
-  calibration_manager_ = std::make_unique<calibration::CalibrationManagerImpl>(timer_.get(), scanner_client_.get(),
-                                                                               slice_translator_.get(), registry_);
-
   // Service Mode
   web_hmi_server_ = std::make_unique<web_hmi::WebHmiServer>(web_hmi_in_socket_.get(), web_hmi_out_socket_.get(),
-                                                            calibration_manager_.get(), joint_geometry_provider_.get(),
-                                                            kinematics_client_.get(), activity_status_.get());
+                                                            joint_geometry_provider_.get(), kinematics_client_.get(),
+                                                            activity_status_.get());
 
   // Image logging manager
   auto image_logger_config = configuration_->GetImageLoggingConfiguration();
@@ -186,7 +176,7 @@ auto Application::Run(const std::string& event_loop_name, const std::string& end
     return true;
   };
 
-  calibration_manager_->SetWOCalCoordinator(weld_object_calibration_allowed);
+  // Removed: calibration_manager_ v1
 
   service_mode_manager_ = std::make_unique<web_hmi::ServiceModeManagerImpl>(
       web_hmi_out_socket_.get(), kinematics_client_.get(), joint_geometry_provider_.get(), weld_control_.get(),
@@ -197,7 +187,7 @@ auto Application::Run(const std::string& event_loop_name, const std::string& end
     this->Exit();
   };
   management_server_ = std::make_unique<management::ManagementServer>(
-      management_socket_.get(), joint_geometry_provider_.get(), activity_status_.get(), calibration_manager_.get(),
+      management_socket_.get(), joint_geometry_provider_.get(), activity_status_.get(), calibration_manager_v2_.get(),
       calibration_manager_v2_.get(), weld_control_.get(), shutdown_handler);
 
   coordinates_translator_->AddObserver(weld_control_.get());

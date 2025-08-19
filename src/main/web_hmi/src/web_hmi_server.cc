@@ -10,7 +10,6 @@
 #include <utility>
 
 #include "../web_hmi_json_helpers.h"
-#include "calibration/calibration_manager.h"
 #include "common/logging/application_log.h"
 #include "common/zevs/zevs_core.h"
 #include "coordination/activity_status.h"
@@ -21,7 +20,6 @@
 #include "macs/macs_point.h"
 #include "macs/macs_slice.h"
 #include "version.h"
-#include "web_hmi/src/web_hmi_calibration.h"
 #include "web_hmi/web_hmi.h"
 
 namespace {
@@ -33,7 +31,6 @@ const std::string ADAPTIO_IO = "adaptio_io";
 using web_hmi::WebHmiServer;
 
 WebHmiServer::WebHmiServer(zevs::CoreSocket* in_socket, zevs::CoreSocket* out_socket,
-                           calibration::CalibrationManager* calibration_manager,
                            joint_geometry::JointGeometryProvider* joint_geometry_provider,
                            kinematics::KinematicsClient* kinematics_client,
                            coordination::ActivityStatus* activity_status)
@@ -44,9 +41,6 @@ WebHmiServer::WebHmiServer(zevs::CoreSocket* in_socket, zevs::CoreSocket* out_so
   LOG_DEBUG("Starting WebHmiServer");
   auto handler = [this](zevs::MessagePtr msg) { this->OnMessage(std::move(msg)); };
   in_socket_->SetHandler(handler);
-
-  calibration_ =
-      std::make_unique<WebHmiCalibration>(out_socket_, calibration_manager, joint_geometry_provider, activity_status_);
 }
 
 auto WebHmiServer::CheckSubscribers(std::string const& topic, nlohmann::json const& payload) -> bool {
@@ -74,11 +68,6 @@ void WebHmiServer::OnMessage(zevs::MessagePtr message) {
     if (message_name == "GetAdaptioVersion") {
       auto response = CreateMessage("GetAdaptioVersionRsp", VersionToPayload(ADAPTIO_VERSION));
       out_socket_->SendWithEnvelope(ADAPTIO_IO, std::move(response));
-
-    } else if (message_name == "LaserToTorchCalibration" || message_name == "WeldObjectCalibration" ||
-               message_name == "GetLaserToTorchCalibration" || message_name == "GetWeldObjectCalibration" ||
-               message_name == "SetLaserToTorchCalibration" || message_name == "SetWeldObjectCalibration") {
-      calibration_->OnMessage(message_name, payload);
 
     } else if (message_name == "GetSlidesPosition") {
       auto on_get_slides_position = [this](std::uint64_t /*time_stamp*/, double horizontal, double vertical) {

@@ -1,6 +1,4 @@
 scanner_calibration: scanner_calibration.yaml
-circular_weld_object_calibration: circular_weld_object_calibration.yaml
-laser_torch_calibration: laser_torch_calibration.yaml
 
 controller:
   # Selects the type of controller

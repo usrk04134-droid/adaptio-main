@@ -5,10 +5,7 @@ left to right direction
 
 package slice_translator {
   package calibration {
-    interface "CalibrationManager" as calibration::CalibrationManager
-    class "CalibrationManagerImpl" as calibration::CalibrationManagerImpl
-
-    calibration::CalibrationManager <|-- calibration::CalibrationManagerImpl
+    ' legacy CalibrationManager removed
   }
 
   class "SliceTranslator" as slice_translator::SliceTranslator
