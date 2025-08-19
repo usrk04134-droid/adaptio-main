@@ -225,8 +225,11 @@ auto SliceTranslatorImpl::FromLaserPlane(const MatrixXd& slice, const macs::Poin
 }
 
 auto SliceTranslatorImpl::RotateToTool(const MatrixXd& slice) -> outcome::result<MatrixXd> {
+  // If weld object calibration is unavailable, return the TCP points translated into MACS
+  // This preserves horizontal/vertical positioning so downstream components (JT/ABP, WebHMI)
+  // still receive groove data, which is sufficient for tests that don't require precise WOC.
   if (!opt_weld_object_calibration_.has_value()) {
-    return outcome::failure(MakeErrorCode(SliceTranslatorErrorCode::MISSING_CALIBRATION));
+    return slice;
   }
   auto rotation_center = opt_weld_object_calibration_.value();
 

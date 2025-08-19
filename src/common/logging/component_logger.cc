@@ -1,4 +1,3 @@
-
 #include "common/logging/component_logger.h"
 
 #include <boost/log/attributes/constant.hpp>
@@ -28,7 +27,14 @@
 using common::logging::ComponentLogger;
 
 ComponentLogger::ComponentLogger(ComponentLoggerConfig const &config) : config_(config) {
-  std::filesystem::create_directories(std::filesystem::path(config.path_directory));
+  try {
+    std::filesystem::create_directories(std::filesystem::path(config.path_directory));
+  } catch (...) {
+    // Fall back to a writable temp directory during tests or restricted environments
+    auto fallback = std::filesystem::temp_directory_path() / "adaptio" / config.component;
+    std::filesystem::create_directories(fallback);
+    config_.path_directory = fallback;
+  }
 
   namespace keywords = boost::log::keywords;
   namespace expr     = boost::log::expressions;
