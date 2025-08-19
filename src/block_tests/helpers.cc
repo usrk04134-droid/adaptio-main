@@ -49,9 +49,11 @@ ApplicationWrapper::ApplicationWrapper(SQLite::Database* database,
   }
 
   registry_    = std::make_shared<prometheus::Registry>();
-  application_ = std::make_unique<Application>(configuration_.get(), std::filesystem::path("assets/events/events.yaml"),
-                                               database, "/var/log/adaptio/", system_clock_now_func_,
-                                               steady_clock_now_func_, registry_.get(), -1);
+  // Use a writable temp directory for logs during tests to avoid permission issues
+  auto test_log_dir = std::filesystem::temp_directory_path() / "adaptio";
+  application_      = std::make_unique<Application>(configuration_.get(), std::filesystem::path("assets/events/events.yaml"),
+                                                    database, test_log_dir, system_clock_now_func_,
+                                                    steady_clock_now_func_, registry_.get(), -1);
 }
 
 void ApplicationWrapper::Start() { application_->Run("Application", "adaptio"); }
