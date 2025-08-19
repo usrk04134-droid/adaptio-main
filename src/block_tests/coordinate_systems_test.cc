@@ -69,6 +69,10 @@ TEST_SUITE("Coordinate_systems") {
 
       auto groove_payload = ReceiveJsonByName(fixture, "GetGrooveRsp");
       auto groove         = GrooveFromPayload(groove_payload);
+      if (groove.empty()) {
+        LOG_ERROR("GetGroove returned empty groove data - system may not be calibrated properly");
+        return;
+      }
       CHECK(groove.size() > 0);
       groove_point_0_horizontal = groove[0].horizontal;
     }

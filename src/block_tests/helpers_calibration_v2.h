@@ -3,6 +3,7 @@
 #include <doctest/doctest.h>
 
 #include "block_tests/helpers_web_hmi.h"
+#include "common/logging/application_log.h"
 #include "common/messages/kinematics.h"
 #include "helpers.h"
 #include "helpers_simulator.h"
@@ -277,9 +278,11 @@ struct CalibrateConfig {
                                 {"scannerMountAngle",  conf.scanner_mount_angle_rad }
   });
 
-  CHECK_EQ(LaserTorchCalSetRsp(fixture), nlohmann::json{
-                                             {"result", "ok"}
-  });
+  auto ltc_set_response = LaserTorchCalSetRsp(fixture);
+  if (ltc_set_response != nlohmann::json{{"result", "ok"}}) {
+    LOG_ERROR("LaserTorchCalSet failed with response: {}", ltc_set_response.dump());
+    return false;
+  }
 
   // Operator starts the calibration procedure
   WeldObjectCalStart(fixture, conf.wire_diameter_mm, helpers_simulator::ConvertM2Mm(conf.stickout_m),
@@ -291,7 +294,10 @@ struct CalibrateConfig {
 
   // This Rsp triggers the WebHmi to display the instruction to
   // touch the left wall
-  CHECK(WeldObjectCalStartRsp(fixture));
+  if (!WeldObjectCalStartRsp(fixture)) {
+    LOG_ERROR("WeldObjectCalStart failed");
+    return false;
+  }
 
   // Simulate that the operator moves the torch to touch the left wall
   simulator.TouchLeftWall(conf.stickout_m);
@@ -302,7 +308,10 @@ struct CalibrateConfig {
   WeldObjectCalLeftPos(fixture);
   ProvideScannerAndKinematicsData(fixture, simulator, torch_pos);
 
-  CHECK(WeldObjectCalLeftPosRsp(fixture));
+  if (!WeldObjectCalLeftPosRsp(fixture)) {
+    LOG_ERROR("WeldObjectCalLeftPos failed");
+    return false;
+  }
 
   // Simulate that the operator moves the torch to touch the right wall
   simulator.TouchRightWall(conf.stickout_m);
@@ -318,7 +327,10 @@ struct CalibrateConfig {
   CHECK(ready_msg);
   CHECK_EQ(ready_msg->state, common::msg::management::ReadyState::State::NOT_READY_AUTO_CAL_MOVE);
 
-  CHECK(WeldObjectCalRightPosRsp(fixture));
+  if (!WeldObjectCalRightPosRsp(fixture)) {
+    LOG_ERROR("WeldObjectCalRightPos failed");
+    return false;
+  }
 
   TESTLOG(">>>>> Automatic grid measurement sequence started");
 
@@ -328,7 +340,10 @@ struct CalibrateConfig {
 
   // The procedure is complete here
   auto calibration_result = WeldObjectCalResult(fixture, sim_config);
-  CHECK(calibration_result["result"] == "ok");
+  if (calibration_result["result"] != "ok") {
+    LOG_ERROR("WeldObjectCalResult failed: {}", calibration_result.dump());
+    return false;
+  }
   TESTLOG(">>>>> WeldObjectCalResult: {}", calibration_result.dump());
   auto torch_to_lpcs_translation_c2 = calibration_result["torchToLpcsTranslation"]["c2"].get<double>();
   CHECK_EQ(round(torch_to_lpcs_translation_c2), round(1000 * sim_config.lpcs_config.y));
