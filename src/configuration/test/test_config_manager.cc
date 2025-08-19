@@ -85,8 +85,6 @@ calibration_fixture_joint_geometry:
     REQUIRE_CALL(mock_factory, CreateFileHandler()).RETURN(mock_fh);
     REQUIRE_CALL(*mock_fh, ReadFile("/etc/adaptio/configuration.yaml")).RETURN(default_config);
 
-    REQUIRE_CALL(mock_factory, CreateConverter(TAG_CWOC, "/etc/adaptio/2.yaml")).RETURN(nullptr);
-    REQUIRE_CALL(mock_factory, CreateConverter(TAG_LTC, "/etc/adaptio/3.yaml")).RETURN(nullptr);
 
     ConfigManager configuration("");
     CHECK_EQ(configuration.Init("/etc/adaptio/configuration.yaml", {}, "/var/lib/adaptio"),
@@ -212,8 +210,6 @@ calibration_fixture_joint_geometry:
     REQUIRE_CALL(*mock_fh, ReadFile("/etc/adaptio/configuration.yaml")).RETURN(default_config);
     REQUIRE_CALL(*mock_fh, ReadFile("/var/lib/adaptio/configuration.yaml")).RETURN(user_config);
 
-    REQUIRE_CALL(mock_factory, CreateConverter(TAG_CWOC, "/etc/adaptio/2.yaml")).RETURN(nullptr);
-    REQUIRE_CALL(mock_factory, CreateConverter(TAG_LTC, "/etc/adaptio/3.yaml")).RETURN(nullptr);
 
     ConfigManager configuration("");
     CHECK_EQ(configuration.Init("/etc/adaptio/configuration.yaml", {}, "/var/lib/adaptio"),
@@ -294,8 +290,6 @@ calibration_fixture_joint_geometry:
     REQUIRE_CALL(*mock_fh, ReadFile("/etc/adaptio/configuration.yaml")).RETURN(default_config);
     REQUIRE_CALL(*mock_fh, ReadFile("/var/lib/adaptio/configuration.yaml")).RETURN(user_config);
 
-    REQUIRE_CALL(mock_factory, CreateConverter(TAG_CWOC, "/var/lib/adaptio/2.yaml")).RETURN(nullptr);
-    REQUIRE_CALL(mock_factory, CreateConverter(TAG_LTC, "/var/lib/adaptio/3.yaml")).RETURN(nullptr);
 
     ConfigManager configuration("");
     CHECK_EQ(configuration.Init("/etc/adaptio/configuration.yaml", {}, "/var/lib/adaptio"),
@@ -461,8 +455,6 @@ calibration_fixture_joint_geometry:
     REQUIRE_CALL(*mock_fh, ReadFile("/var/lib/adaptio/configuration.yaml")).RETURN(user_config);
     REQUIRE_CALL(*mock_fh, ReadFile("/tmp/configuration.yaml")).RETURN(cmd_line_config);
 
-    REQUIRE_CALL(mock_factory, CreateConverter(TAG_CWOC, "/etc/adaptio/2.yaml")).RETURN(nullptr);
-    REQUIRE_CALL(mock_factory, CreateConverter(TAG_LTC, "/etc/adaptio/3.yaml")).RETURN(nullptr);
 
     ConfigManager configuration("");
     CHECK_EQ(configuration.Init("/etc/adaptio/configuration.yaml", "/tmp/configuration.yaml", "/var/lib/adaptio"),

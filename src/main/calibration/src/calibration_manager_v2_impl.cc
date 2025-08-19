@@ -206,8 +206,13 @@ void CalibrationManagerV2Impl::HandleRightPosData(const lpcs::Slice& data, const
 }
 
 // coordination::CalibrationStatus
-auto CalibrationManagerV2Impl::LaserToTorchCalibrationValid() const -> bool { return false; };
-auto CalibrationManagerV2Impl::WeldObjectCalibrationValid() const -> bool { return false; };
+auto CalibrationManagerV2Impl::LaserToTorchCalibrationValid() const -> bool {
+  return laser_torch_configuration_storage_.Get().has_value();
+}
+
+auto CalibrationManagerV2Impl::WeldObjectCalibrationValid() const -> bool {
+  return calibration_result_storage_.Get().has_value();
+}
 void CalibrationManagerV2Impl::Subscribe(std::function<void()> subscriber) {
   calibration_status_subscriber_ = subscriber;
 };
@@ -480,6 +485,17 @@ void CalibrationManagerV2Impl::HandleRightTouchFailure(const std::string& reason
   LOG_ERROR("Calibration right touch procedure failed: {}", reason);
   web_hmi_->Send("WeldObjectCalRightPosRsp", FAILURE_PAYLOAD);
   StopCalibration();
+}
+
+void CalibrationManagerV2Impl::OnWeldObjectCalStop() {
+  LOG_INFO("WeldObjectCalStop received");
+  if (activity_status_->Get() == coordination::ActivityStatusE::WELD_OBJECT_CALIBRATION) {
+    StopCalibration();
+    web_hmi_->Send("WeldObjectCalStopRsp", SUCCESS_PAYLOAD);
+  } else {
+    LOG_INFO("WeldObjectCalStop received when not in calibration mode");
+    web_hmi_->Send("WeldObjectCalStopRsp", FAILURE_PAYLOAD);
+  }
 }
 
 auto CalibrationManagerV2Impl::CalculateTopCenter() -> std::optional<macs::Point> {

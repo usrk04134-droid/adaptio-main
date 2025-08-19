@@ -1,6 +1,5 @@
 target_sources(${ADAPTIO_APPLICATION}
     PRIVATE
-    calibration_manager_impl.h
     calibration_manager.h
     calibration_metrics.h
     calibration_types.h
@@ -13,7 +12,6 @@ target_sources(${ADAPTIO_APPLICATION}
     src/stored_calibration_result.h
     src/calibration_sequence_runner.h
     
-    calibration_manager_impl.cc
     calibration_metrics.cc
     src/calibration_solver_impl.cc
     src/calibration_manager_v2_impl.cc
