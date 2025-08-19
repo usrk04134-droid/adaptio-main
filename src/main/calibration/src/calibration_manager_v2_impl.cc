@@ -206,8 +206,13 @@ void CalibrationManagerV2Impl::HandleRightPosData(const lpcs::Slice& data, const
 }
 
 // coordination::CalibrationStatus
-auto CalibrationManagerV2Impl::LaserToTorchCalibrationValid() const -> bool { return false; };
-auto CalibrationManagerV2Impl::WeldObjectCalibrationValid() const -> bool { return false; };
+auto CalibrationManagerV2Impl::LaserToTorchCalibrationValid() const -> bool {
+  return laser_torch_configuration_storage_.Get().has_value();
+}
+
+auto CalibrationManagerV2Impl::WeldObjectCalibrationValid() const -> bool {
+  return calibration_result_storage_.Get().has_value();
+}
 void CalibrationManagerV2Impl::Subscribe(std::function<void()> subscriber) {
   calibration_status_subscriber_ = subscriber;
 };

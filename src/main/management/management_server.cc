@@ -63,7 +63,9 @@ ManagementServer::ManagementServer(zevs::Socket* socket, joint_geometry::JointGe
     weld_control_->ResetGrooveData();
     check_ready_state();
   };
-  calibration_status_->Subscribe(on_calibration_changed);
+  if (calibration_status_) {
+    calibration_status_->Subscribe(on_calibration_changed);
+  }
   calibration_status_v2_->Subscribe(on_calibration_changed);
   activity_status_->Subscribe(check_ready_state);
   joint_geometry_provider_->Subscribe(check_ready_state);
@@ -178,9 +180,10 @@ auto ManagementServer::UpdateReadyState() -> bool {
       break;
   }
 
-  auto laser_to_torch_cal_valid = calibration_status_->LaserToTorchCalibrationValid();
-  auto weld_object_cal_valid =
-      calibration_status_->WeldObjectCalibrationValid() || calibration_status_v2_->WeldObjectCalibrationValid();
+  // Use v2 calibration system for both laser torch and weld object calibration
+  // Legacy calibration system (v1) has been removed
+  auto laser_to_torch_cal_valid = calibration_status_v2_->LaserToTorchCalibrationValid();
+  auto weld_object_cal_valid = calibration_status_v2_->WeldObjectCalibrationValid();
 
   auto joint_geometry = joint_geometry_provider_->GetJointGeometry();
 
