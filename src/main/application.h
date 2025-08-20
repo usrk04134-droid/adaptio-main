@@ -9,7 +9,6 @@
 
 #include "bead_control/src/bead_control_impl.h"
 #include "bead_control/src/weld_position_data_storage.h"
-#include "calibration/calibration_manager_impl.h"
 #include "calibration/src/calibration_manager_v2_impl.h"
 #include "calibration/src/calibration_solver_impl.h"
 #include "common/clock_functions.h"
@@ -69,7 +68,6 @@ class Application {
   std::unique_ptr<slice_translator::SliceTranslatorImpl> slice_translator_;
   std::unique_ptr<slice_translator::ModelImpl> model_impl_;
   std::unique_ptr<calibration::CalibrationSolverImpl> calibration_solver_;
-  std::unique_ptr<calibration::CalibrationManagerImpl> calibration_manager_;
   std::unique_ptr<calibration::CalibrationManagerV2Impl> calibration_manager_v2_;
   std::unique_ptr<tracking::TrackingManagerImpl> tracking_manager_;
   std::unique_ptr<slice_translator::CoordinatesTranslator> coordinates_translator_;

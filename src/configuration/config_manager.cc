@@ -30,9 +30,7 @@ using configuration::ConfigManager;
 
 ConfigManager::ConfigManager(const fs::path& path_scanner_calibration)
     : path_scanner_calibration_(path_scanner_calibration) {
-  converters_.insert({TAG_CWOC, std::make_pair(fs::path(), nullptr)});
-  converters_.insert({TAG_LTC, std::make_pair(fs::path(), nullptr)});
-
+  // Legacy calibration files removed
   auto* factory = GetFactory();
   fh_           = factory->CreateFileHandler();
 }
@@ -89,29 +87,14 @@ auto ConfigManager::Init(const fs::path& default_config, std::optional<fs::path>
 
 auto ConfigManager::CheckConfigFiles() -> boost::outcome_v2::result<void> {
   LOG_DEBUG("CheckConfigFiles");
-  for (const auto& config : converters_) {
-    auto tag  = config.first;
-    auto file = config.second.first;
-
-    LOG_INFO("Configuration file used: tag: {} file: {}", tag, file.string());
-
-    if (file.empty()) {
-      LOG_ERROR("Config file for tag not set: {}", file.string());
-      return boost::outcome_v2::failure(make_error_code(ConfigurationErrorCode::CONFIGURATION_READ_FILE_ERROR));
-    }
-
-    if (!fh_->FileExist(file)) {
-      LOG_ERROR("File for configuration does not exist: tag : {} file: {}", tag, file.string());
-      return boost::outcome_v2::failure(make_error_code(ConfigurationErrorCode::CONFIGURATION_WRITE_FILE_MISSING));
-    }
-  }
-
+  // No legacy converters
   return boost::outcome_v2::success();
 }
 
 auto ConfigManager::ReadConfigFiles() -> boost::outcome_v2::result<void> {
   auto* factory = GetFactory();
 
+  // Only dynamic converters registered by configuration.yaml remain (scanner calibration etc.)
   for (auto& config : converters_) {
     auto tag  = config.first;
     auto file = config.second.first;
@@ -202,33 +185,17 @@ auto ConfigManager::ReadConfigurationFile(const fs::path& config_file, bool must
 }
 
 void ConfigManager::TryCopyConfigFiles(fs::path const& default_config, fs::path const& path_data) {
-  // Try copy the files refered in the configuration.yaml from /etc/adaptio to /var/lib/adaptio
-  // If they not already exist in /var/lib/adaptio
-  auto try_copy_file = [this, default_config, path_data](auto const& sub_config) {
-    auto from_file = fs::path(default_config.parent_path() / sub_config.first.filename());
-    auto to_file   = path_data.string() + "/" + from_file.filename().string();
-    if (fs::exists(from_file) && !fs::exists(to_file)) {
-      fs::copy_file(from_file, to_file, fs::copy_options::overwrite_existing);
-      fh_->SetWritePermission(to_file);
-    }
-  };
-
-  try_copy_file(converters_[TAG_CWOC]);
-  try_copy_file(converters_[TAG_LTC]);
+  // Legacy config files removed; nothing to copy
 }
 
 auto ConfigManager::GetCircWeldObjectCalib()
     -> std::pair<std::optional<calibration::WeldObjectCalibration>, ConfigurationHandle*> {
-  auto* converter = converters_[TAG_CWOC].second.get();
-  auto maybe_cwoc = std::any_cast<std::optional<calibration::WeldObjectCalibration>>(converter->GetConfig());
-  return std::make_pair(maybe_cwoc, converter);
+  return std::make_pair(std::optional<calibration::WeldObjectCalibration>{}, nullptr);
 }
 
 auto ConfigManager::GetLaserTorchCalib()
     -> std::pair<std::optional<calibration::LaserTorchCalibration>, ConfigurationHandle*> {
-  auto* converter = converters_[TAG_LTC].second.get();
-  auto maybe_ltc  = std::any_cast<std::optional<calibration::LaserTorchCalibration>>(converter->GetConfig());
-  return std::make_pair(maybe_ltc, converter);
+  return std::make_pair(std::optional<calibration::LaserTorchCalibration>{}, nullptr);
 }
 
 auto ConfigManager::GetScannerCalibration(const std::string& scanner_serial_number)
@@ -260,19 +227,14 @@ auto ConfigManager::GetScannerCalibration(const std::string& scanner_serial_numb
         continue;
       }
 
-      auto config = std::any_cast<scanner::ScannerCalibrationData>(converter.GetConfig());
-
-      if (scanner_serial_number.empty() || scanner_serial_number == config.scanner_serial_number) {
-        LOG_INFO("Found scanner calibration file for serial-number {} at {}", config.scanner_serial_number, path);
-        return config;
+      auto const calibration = converter.GetConfig();
+      if (calibration.has_value()) {
+        return calibration.value();
       }
     }
-  } catch (const fs::filesystem_error& ex) {
-    LOG_ERROR("Filesystem error during directory iteration: {}", ex.what());
+  } catch (...) {
+    LOG_ERROR("Failed to iterate directory: {}", path_directory.string());
   }
-
-  LOG_ERROR("Unable to find scanner-calibration file for serial-number: {} in directory: {}", scanner_serial_number,
-            path_directory.string());
 
   return {};
 }

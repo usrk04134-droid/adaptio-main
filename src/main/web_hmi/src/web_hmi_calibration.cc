@@ -5,7 +5,7 @@
 #include <string>
 #include <utility>
 
-#include "calibration/calibration_manager.h"
+#include "calibration/src/calibration_manager_v2_impl.h"
 #include "calibration/calibration_types.h"
 #include "common/logging/application_log.h"
 #include "common/zevs/zevs_core.h"
@@ -17,14 +17,14 @@
 using web_hmi::WebHmiCalibration;
 const std::string ADAPTIO_IO = "adaptio_io";
 
-WebHmiCalibration::WebHmiCalibration(zevs::CoreSocket* socket, calibration::CalibrationManager* calibration_manager,
+WebHmiCalibration::WebHmiCalibration(zevs::CoreSocket* socket, void* /*unused_calibration_manager*/,
                                      joint_geometry::JointGeometryProvider* joint_geometry_provider,
                                      coordination::ActivityStatus* activity_status)
     : socket_(socket),
-      calibration_manager_(calibration_manager),
+      calibration_manager_(nullptr),
       joint_geometry_provider_(joint_geometry_provider),
       activity_status_(activity_status) {
-  calibration_manager->SetObserver(this);
+  // Legacy v1 manager removed; v2 registers its own WebHMI subscriptions
 }
 
 void WebHmiCalibration::OnMessage(const std::string& message_name, const nlohmann::json& payload) {
@@ -39,12 +39,13 @@ void WebHmiCalibration::OnMessage(const std::string& message_name, const nlohman
     double angle                    = payload.at("angle").get<double>();
     double stickout                 = payload.at("stickout").get<double>();
     auto calibration_joint_geometry = joint_geometry_provider_->GetFixtureJointGeometry();
-    calibration_manager_->StartCalibrateLaserToTorch(calibration_joint_geometry, offset, angle, stickout);
+    // Legacy API removed. Request is ignored; use v2 endpoints (LaserTorchCalSet / Get) instead.
 
     activity_status_->Set(coordination::ActivityStatusE::LASER_TORCH_CALIBRATION);
 
   } else if (message_name == "GetLaserToTorchCalibration") {
-    auto calibration = calibration_manager_->GetLaserToTorchCalibration();
+    // Legacy API removed. Respond with invalid.
+    std::optional<calibration::LaserTorchCalibration> calibration;
     bool valid       = false;
     if (calibration) {
       valid = true;
@@ -61,8 +62,8 @@ void WebHmiCalibration::OnMessage(const std::string& message_name, const nlohman
       return;
     }
     auto calibration = LaserTorchCalibrationFromPayload(payload);
-    auto result      = calibration_manager_->SetLaserToTorchCalibration(calibration);
-    auto payload     = ResultPayload(result);
+    // Legacy API removed. Always fail.
+    auto payload     = ResultPayload(false);
     auto message     = CreateMessage("SetLaserToTorchCalibrationRsp", payload);
     socket_->SendWithEnvelope(ADAPTIO_IO, std::move(message));
   } else if (message_name == "WeldObjectCalibration") {
@@ -82,11 +83,12 @@ void WebHmiCalibration::OnMessage(const std::string& message_name, const nlohman
       return;
     }
 
-    calibration_manager_->StartCalibrateWeldObject(joint_geometry.value(), radius, stickout);
+    // Legacy API removed. Use v2 procedures (WeldObjectCalStart/LeftPos/RightPos) instead.
 
     activity_status_->Set(coordination::ActivityStatusE::WELD_OBJECT_CALIBRATION);
   } else if (message_name == "GetWeldObjectCalibration") {
-    auto calibration = calibration_manager_->GetWeldObjectCalibration();
+    // Legacy API removed. Respond with invalid.
+    std::optional<calibration::WeldObjectCalibration> calibration;
     bool valid       = false;
     if (calibration) {
       valid = true;
@@ -98,9 +100,8 @@ void WebHmiCalibration::OnMessage(const std::string& message_name, const nlohman
     socket_->SendWithEnvelope(ADAPTIO_IO, std::move(message));
 
   } else if (message_name == "SetWeldObjectCalibration") {
-    auto calibration = WeldObjectCalibrationFromPayload(payload);
-    auto result      = calibration_manager_->SetWeldObjectCalibration(calibration);
-    auto payload     = ResultPayload(result);
+    // Legacy API removed. Always fail.
+    auto payload     = ResultPayload(false);
     auto message     = CreateMessage("SetWeldObjectCalibrationRsp", payload);
     socket_->SendWithEnvelope(ADAPTIO_IO, std::move(message));
 
@@ -109,42 +110,4 @@ void WebHmiCalibration::OnMessage(const std::string& message_name, const nlohman
   }
 }
 
-void WebHmiCalibration::LaserTorchCalibrationCompleted(const calibration::LaserTorchCalibration& data) {
-  LOG_DEBUG("LaserToTorchCalibration completed");
-
-  auto payload = LaserTorchCalibrationToPayload(true, data);
-  auto message = CreateMessage("LaserToTorchCalibrationRsp", payload);
-  socket_->SendWithEnvelope(ADAPTIO_IO, std::move(message));
-
-  activity_status_->Set(coordination::ActivityStatusE::IDLE);
-}
-
-void WebHmiCalibration::LaserTorchCalibrationFailed() {
-  LOG_DEBUG("LaserToTorchCalibration failed");
-
-  auto payload = LaserTorchCalibrationToPayload(false, {});
-  auto message = CreateMessage("LaserToTorchCalibrationRsp", payload);
-  socket_->SendWithEnvelope(ADAPTIO_IO, std::move(message));
-
-  activity_status_->Set(coordination::ActivityStatusE::IDLE);
-}
-
-void WebHmiCalibration::WeldObjectCalibrationCompleted(const calibration::WeldObjectCalibration& data) {
-  LOG_DEBUG("WeldObjectCalibration completed");
-
-  auto payload = WeldObjectCalibrationToPayload(true, data);
-  auto message = CreateMessage("WeldObjectCalibrationRsp", payload);
-  socket_->SendWithEnvelope(ADAPTIO_IO, std::move(message));
-
-  activity_status_->Set(coordination::ActivityStatusE::IDLE);
-}
-
-void WebHmiCalibration::WeldObjectCalibrationFailed() {
-  LOG_DEBUG("WeldObjectCalibration failed");
-
-  auto payload = WeldObjectCalibrationToPayload(false, {});
-  auto message = CreateMessage("WeldObjectCalibrationRsp", payload);
-  socket_->SendWithEnvelope(ADAPTIO_IO, std::move(message));
-
-  activity_status_->Set(coordination::ActivityStatusE::IDLE);
-}
+// Legacy observer callbacks removed

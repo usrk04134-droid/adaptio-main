@@ -254,8 +254,17 @@ auto Naive::GetBottomCentroids(const image::Image& image, const LineSegment& lef
   auto r_left  = int(round(img(1, 0)));
   auto c_right = int(round(img(0, 1)));
 
-  auto maybe_bottom_image =
-      image::ImageUtility::CropImage(image.Data(), r_left, c_left, image.Data().rows() - r_left, c_right - c_left);
+  // Clamp ROI to image bounds to handle grooves close to edges
+  const int img_rows = image.Data().rows();
+  const int img_cols = image.Data().cols();
+  c_left             = std::clamp(c_left, 0, std::max(0, img_cols - 2));
+  c_right            = std::clamp(c_right, c_left + 1, img_cols - 1);
+  r_left             = std::clamp(r_left, 0, img_rows - 2);
+
+  auto roi_rows = std::max(2, img_rows - r_left);
+  auto roi_cols = std::max(2, c_right - c_left);
+
+  auto maybe_bottom_image = image::ImageUtility::CropImage(image.Data(), r_left, c_left, roi_rows, roi_cols);
 
   if (!maybe_bottom_image.has_value()) {
     LOG_ERROR("Not able to crop bottom image.");
@@ -452,25 +461,50 @@ auto Naive::GetWallImage(std::vector<std::tuple<int, int>>& wall_coords_image, c
     auto [c3, r3]     = wall_coords_image[2];
     auto [c4, r4]     = wall_coords_image[3];
     auto right_offset = std::max(c3 - 30, 0);
-    auto right_length = c4 - right_offset;
-    if (r3 <= r4 || right_length <= 0) {
+
+    // Clamp to image bounds and ensure positive sizes
+    int start_row = std::max(std::min(r4, r3 - 1), 0);
+    if (right_offset >= static_cast<int>(image.cols()) - 1) {
+      LOG_WARNING("Right wall offset outside image: {}", right_offset);
+      return {};
+    }
+    int width_cap    = static_cast<int>(image.cols()) - right_offset - 1;
+    int right_length = std::min(c4 - right_offset, width_cap);
+    if (r3 <= r4 || right_length <= 1) {
       LOG_WARNING("Not able to crop image for right wall GetWallImages {} {} {}.", r4, r3, right_length);
       return {};
     }
-    return {
-        {image.block(r4, right_offset, r3 - r4, right_length), {right_offset, r4}}
-    };
+
+    auto maybe_crop = image::ImageUtility::CropImage(image, start_row, right_offset, r3 - start_row, right_length);
+    if (!maybe_crop.has_value()) {
+      LOG_WARNING("Right wall crop failed after clamping.");
+      return {};
+    }
+    return {{maybe_crop.value(), {right_offset, start_row}}};
   } else {
     auto [c1, r1]    = wall_coords_image[0];
     auto [c2, r2]    = wall_coords_image[1];
-    auto left_length = std::min(c2 + 30 - c1, static_cast<int>(image.cols()) - c1 - 1);
-    if (r2 <= r1 || left_length <= 0) {
+
+    // Clamp start col and start row to image bounds
+    int start_col = std::max(c1, 0);
+    if (start_col >= static_cast<int>(image.cols()) - 1) {
+      LOG_WARNING("Left wall offset outside image: {}", start_col);
+      return {};
+    }
+    int start_row  = std::max(std::min(r1, r2 - 1), 0);
+    int width_cap  = static_cast<int>(image.cols()) - start_col - 1;
+    int left_length = std::min(c2 + 30 - start_col, width_cap);
+    if (r2 <= r1 || left_length <= 1) {
       LOG_WARNING("Not able to crop image for left wall GetWallImages {} {} {}.", r1, r2, left_length);
       return {};
     }
-    return {
-        {image.block(r1, c1, r2 - r1, left_length), {c1, r1}}
-    };
+
+    auto maybe_crop = image::ImageUtility::CropImage(image, start_row, start_col, r2 - start_row, left_length);
+    if (!maybe_crop.has_value()) {
+      LOG_WARNING("Left wall crop failed after clamping.");
+      return {};
+    }
+    return {{maybe_crop.value(), {start_col, start_row}}};
   }
 }
 

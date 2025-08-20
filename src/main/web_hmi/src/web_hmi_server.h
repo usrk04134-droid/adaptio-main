@@ -4,7 +4,7 @@
 #include <regex>
 
 #include "../web_hmi.h"
-#include "calibration/calibration_manager.h"
+#include "calibration/src/calibration_manager_v2_impl.h"
 #include "common/zevs/zevs_core.h"
 #include "coordination/activity_status.h"
 #include "joint_geometry/joint_geometry_provider.h"
@@ -19,7 +19,7 @@ namespace web_hmi {
 class WebHmiServer : public slice_translator::SliceObserver, public WebHmi {
  public:
   WebHmiServer(zevs::CoreSocket* in_socket, zevs::CoreSocket* out_socket,
-               calibration::CalibrationManager* calibration_manager,
+               calibration::CalibrationManagerV2Impl* calibration_manager_v2,
                joint_geometry::JointGeometryProvider* joint_geometry_provider,
                kinematics::KinematicsClient* kinematics_client, coordination::ActivityStatus* activity_status);
 
