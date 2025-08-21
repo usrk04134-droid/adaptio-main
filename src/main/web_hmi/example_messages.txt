@@ -49,41 +49,40 @@ Request:
 Request:
 {"name":"ServiceModeStop","payload":{}}
 
-------------------
+-------------------
 Request:
-{"name":"LaserToTorchCalibration","payload":{"offset":35.0, "angle":0.5, "stickout":25.0}}
+{"name":"WeldObjectCalStart","payload":{"wireDiameter":4.0,"stickout":25.0,"weldObjectRadius":7000.0}}
 Response:
-{"name":"LaserToTorchCalibrationRsp","payload":{"angle":0.5,"valid":true,"x":-6.2,"y":35.2,"z":-24.6}}
+{"name":"WeldObjectCalStartRsp","payload":{"result":"ok"}}
 
-------------------
+-------------------
 Request:
-{"name":"GetLaserToTorchCalibration","payload":{}}
+{"name":"WeldObjectCalStop","payload":{}}
 Response:
-{"name":"GetLaserToTorchCalibrationRsp","payload":{"angle":0.2,"valid":true,"x":0.0,"y":35.0,"z":-25.0}}
+{"name":"WeldObjectCalStopRsp","payload":{"result":"ok"}}
 
-------------------
+-------------------
 Request:
-{"name":"SetLaserToTorchCalibration","payload":{"angle":0.2,"x":0.0,"y":35.0,"z":-25.0}}
+{"name":"WeldObjectCalLeftPos","payload":{}}
 Response:
-{"name":"SetLaserToTorchCalibrationRsp","payload":{"result", true}}
+{"name":"WeldObjectCalLeftPosRsp","payload":{"result":"ok"}}
 
-------------------
+-------------------
 Request:
-{"name":"WeldObjectCalibration","payload":{"radius":3000.0, "stickout":25.0}}
+{"name":"WeldObjectCalRightPos","payload":{}}
 Response:
-{"name":"WeldObjectCalibrationRsp","payload":{"valid":true,"y":-1726.2,"z":-2448.6, "xAdjustment": 1.6}}
+{"name":"WeldObjectCalRightPosRsp","payload":{"result":"ok"}}
 
-------------------
+-------------------
 Request:
-{"name":"SetWeldObjectCalibration","payload":{"y":-1726.2,"z":-2448.6, "xAdjustment": 1.6}}
+{"name":"WeldObjectCalGet","payload":{}}
 Response:
-{"name":"SetWeldObjectCalibrationRsp","payload":{"result":true}}
-
-------------------
+{"name":"WeldObjectCalGetRsp","payload":{"result":"ok","rotationCenter":{"c1":-28.8,"c2":-88.7,"c3":-970.9},"torchToLpcsTranslation":{"c1":0.0,"c2":355.1,"c3":23.1},"weldObjectRotationAxis":{"c1":0.0,"c2":0.0,"c3":1.0}}}
+-------------------
 Request:
-{"name":"GetWeldObjectCalibration","payload":{}}
+{"name":"WeldObjectCalSet","payload":{"rotationCenter":{"c1":-28.8,"c2":-88.7,"c3":-970.9},"torchToLpcsTranslation":{"c1":0.0,"c2":355.1,"c3":23.1},"weldObjectRotationAxis":{"c1":0.0,"c2":0.0,"c3":1.0}}}
 Response:
-{"name":"GetWeldObjectCalibrationRsp","payload":{"valid":true,"y":-1726.2,"z":-2448.6, "xAdjustment": 1.6}}
+{"name":"WeldObjectCalSetRsp","payload":{"result":"ok"}}
 
 ------------------
 Request:
@@ -138,58 +137,3 @@ Request :
 {"name" : "ImageLoggingStatus", "payload" : {}}
 Response :
 {"name" : "ImageLoggingStatusRsp", "payload" : {{"type":"direct","sample_rate":1,"buffer_size":0,"path":"/tmp"}}}
-
-------------------
-Request:
-{"name":"WeldObjectCalStart","payload":{"wireDiameter":4.0,"stickout":25.0,"weldObjectRadius":7000.0}}
-Response:
-{"name":"WeldObjectCalStartRsp","payload":{"result":"ok"}}
-
-------------------
-Request:
-{"name":"WeldObjectCalStop","payload":{}}
-Response:
-{"name":"WeldObjectCalStopRsp","payload":{"result":"ok"}}
-
-------------------
-Request:
-{"name":"WeldObjectCalLeftPos","payload":{}}
-Response:
-{"name":"WeldObjectCalLeftPosRsp","payload":{"result":"ok"}}
-
-------------------
-Request:
-{"name":"WeldObjectCalRightPos","payload":{}}
-Response:
-{"name":"WeldObjectCalRightPosRsp","payload":{"result":"ok"}}
-
-------------------
-Push:
-{"name":"WeldObjectCalProgress","payload":{"progress":0.3}}
-
-------------------
-Push:
-{"name":"WeldObjectCalResult","payload":{"result":"ok","laserlineClockPosition":0.3,"weldObjectOrientation":{"c1":-0.1,"c2":1.0,"c3":-0.1},"calibrationCenter":{"c1":2.5,"c2":-1726.2,"c3":-2448.6}}}
-
-------------------
-Request:
-{"name":"WeldObjectCalGet","payload":{}}
-Response:
-{"name":"WeldObjectCalGetRsp","payload":{"result":"ok","rotationCenter":{"c1":-28.8,"c2":-88.7,"c3":-970.9},"torchToLpcsTranslation":{"c1":0.0,"c2":355.1,"c3":23.1},"weldObjectRotationAxis":{"c1":0.0,"c2":0.0,"c3":1.0}}}
-------------------
-Request:
-{"name":"WeldObjectCalSet","payload":{"rotationCenter":{"c1":-28.8,"c2":-88.7,"c3":-970.9},"torchToLpcsTranslation":{"c1":0.0,"c2":355.1,"c3":23.1},"weldObjectRotationAxis":{"c1":0.0,"c2":0.0,"c3":1.0}}}
-Response:
-{"name":"WeldObjectCalSetRsp","payload":{"result":"ok"}}
-
-------------------
-Request:
-{"name":"LaserTorchCalGet","payload":{}}
-Response:
-{"name":"LaserTorchCalGetRsp","payload":{"result":"ok","distanceLaserTorch":150.0,"stickout":25.0, "scannerMountAngle":0.26}}
-
-------------------
-Request:
-{"name":"LaserTorchCalSet","payload":{"distanceLaserTorch":150.0,"stickout":25.0, "scannerMountAngle":0.26}}
-Response:
-{"name":"LaserTorchCalSetRsp","payload":{"result":"ok"}}

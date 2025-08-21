@@ -38,8 +38,7 @@ class ManagementServer : public weld_control::WeldControlObserver {
  public:
   ManagementServer(zevs::Socket* socket, joint_geometry::JointGeometryProvider* joint_geometry_provider,
                    coordination::ActivityStatus* activity_status, coordination::CalibrationStatus* calibration_status,
-                   coordination::CalibrationStatus* calibration_status_v2, weld_control::WeldControl* weld_control,
-                   std::function<void()> shutdown_handler);
+                   weld_control::WeldControl* weld_control, std::function<void()> shutdown_handler);
 
   // WeldControlObserver:
   void OnNotifyHandoverToManual() override;
@@ -68,7 +67,6 @@ class ManagementServer : public weld_control::WeldControlObserver {
   joint_geometry::JointGeometryProvider* joint_geometry_provider_;
   coordination::ActivityStatus* activity_status_;
   coordination::CalibrationStatus* calibration_status_;
-  coordination::CalibrationStatus* calibration_status_v2_;
   weld_control::WeldControl* weld_control_;
   std::function<void()> shutdown_handler_;
   bool ready_state_subscribed_ = false;

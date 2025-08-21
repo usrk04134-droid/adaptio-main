@@ -13,7 +13,6 @@ target_sources(${BLOCK_TESTS_APPLICATION}
 
     helpers.cc
     joint_tracking_test.cc
-    calibration_test.cc
     coordination_test.cc
     coordinate_systems_test.cc
     weld_data_set_test.cc
@@ -26,7 +25,6 @@ target_sources(${BLOCK_TESTS_APPLICATION}
     basic_abp_welding_test.cc
     weld_process_parameters_test.cc
     adaptive_welding_test.cc
-    metrics_test.cc
     calibration_v2_test.cc
     settings_test.cc
 )

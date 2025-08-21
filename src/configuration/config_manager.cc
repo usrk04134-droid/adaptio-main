@@ -23,16 +23,12 @@
 #include "configuration/tolerances_converter.h"
 #include "configuration/weld_control_converter.h"
 #include "controller/pn_driver/pn_driver.h"
-#include "main/calibration/calibration_types.h"
 #include "scanner/scanner_calibration_configuration.h"
 
 using configuration::ConfigManager;
 
 ConfigManager::ConfigManager(const fs::path& path_scanner_calibration)
     : path_scanner_calibration_(path_scanner_calibration) {
-  converters_.insert({TAG_CWOC, std::make_pair(fs::path(), nullptr)});
-  converters_.insert({TAG_LTC, std::make_pair(fs::path(), nullptr)});
-
   auto* factory = GetFactory();
   fh_           = factory->CreateFileHandler();
 }
@@ -213,22 +209,10 @@ void ConfigManager::TryCopyConfigFiles(fs::path const& default_config, fs::path 
     }
   };
 
-  try_copy_file(converters_[TAG_CWOC]);
-  try_copy_file(converters_[TAG_LTC]);
-}
-
-auto ConfigManager::GetCircWeldObjectCalib()
-    -> std::pair<std::optional<calibration::WeldObjectCalibration>, ConfigurationHandle*> {
-  auto* converter = converters_[TAG_CWOC].second.get();
-  auto maybe_cwoc = std::any_cast<std::optional<calibration::WeldObjectCalibration>>(converter->GetConfig());
-  return std::make_pair(maybe_cwoc, converter);
-}
-
-auto ConfigManager::GetLaserTorchCalib()
-    -> std::pair<std::optional<calibration::LaserTorchCalibration>, ConfigurationHandle*> {
-  auto* converter = converters_[TAG_LTC].second.get();
-  auto maybe_ltc  = std::any_cast<std::optional<calibration::LaserTorchCalibration>>(converter->GetConfig());
-  return std::make_pair(maybe_ltc, converter);
+  // Only scanner calibration remains managed via YAML in this module
+  if (converters_.contains(TAG_SC)) {
+    try_copy_file(converters_[TAG_SC]);
+  }
 }
 
 auto ConfigManager::GetScannerCalibration(const std::string& scanner_serial_number)
