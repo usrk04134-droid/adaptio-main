@@ -3,6 +3,7 @@
 1. [Documentation](docs)
 1. [Code documentation](src/DOCS.md)
 1. [Requirements](docs/requirements.md)
+1. Architecture diagram: see `docs/architecture.svg`
 
 ## Quick start
 
