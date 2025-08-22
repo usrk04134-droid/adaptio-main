@@ -105,3 +105,20 @@ Refer [here](src/block_tests/BLOCK_TESTS.md)
 Refer [Ruff: Python Linter and Formatter][lint-python]
 
 [lint-python]: https://gitlab.com/esab/abw/infra-and-test#ruff-introduction
+
+## Block Diagram
+
+The Adaptio application block diagram (without FSM) is generated from PlantUML and stored under `assets/diagrams`:
+
+- `assets/diagrams/adaptio_block_diagram.svg`
+- `assets/diagrams/adaptio_block_diagram.png`
+
+Source: `docs/adaptio_block_diagram.puml`.
+
+Regenerate locally:
+
+```bash
+# requires Java and Graphviz
+curl -fsSL -o /tmp/plantuml.jar https://repo1.maven.org/maven2/net/sourceforge/plantuml/plantuml/1.2024.7/plantuml-1.2024.7.jar
+java -jar /tmp/plantuml.jar -tpng -tsvg -o assets/diagrams docs/adaptio_block_diagram.puml
+```
