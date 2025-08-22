@@ -19,9 +19,6 @@ component "adaptio-core" {
     component "file" as common::file {
     }
 
-    component "fsm" as common::fsm {
-    }
-
     component "joint_tracking" as common::joint_tracking {
     }
 
