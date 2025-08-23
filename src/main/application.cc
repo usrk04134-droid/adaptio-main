@@ -97,7 +97,7 @@ auto Application::Run(const std::string& event_loop_name, const std::string& end
 
   // CoordinatesTranslator
   coordinates_translator_ =
-      std::make_unique<slice_translator::CoordinatesTranslator>(model_impl_.get());
+      std::make_unique<slice_translator::CoordinatesTranslator>(slice_translator_.get(), model_impl_.get());
   scanner_client_->AddObserver(coordinates_translator_.get());
 
   // Management socket
