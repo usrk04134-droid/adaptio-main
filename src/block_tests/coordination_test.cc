@@ -100,8 +100,7 @@ TEST_SUITE("Coordination") {
         static_cast<uint32_t>(tracking::TrackingMode::TRACKING_LEFT_HEIGHT), HORIZONTAL_OFFSET, VERTICAL_OFFSET};
     fixture.Management()->Dispatch(start_joint_tracking_msg);
 
-    auto start_cal = web_hmi::CreateMessage("LaserToTorchCalibration", {});
-    fixture.WebHmiIn()->DispatchMessage(std::move(start_cal));
+    // Legacy LaserToTorchCalibration removed; ensure busy state remains TRACKING without triggering calibration
 
     // Check that status is still TRACKING
     {

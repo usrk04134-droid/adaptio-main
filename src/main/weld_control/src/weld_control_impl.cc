@@ -1270,9 +1270,11 @@ void WeldControlImpl::AutoBeadPlacementStart(LayerType layer_type) {
       observer_->OnNotifyHandoverToManual();
     } else {
       LOG_INFO("Handover to ABP-CAP");
-      handover_to_abp_cap_timestamp_ = steady_clock_now_func_();
-      ready_for_auto_cap_            = true; /* ABP active */
+      ready_for_auto_cap_ = true; /* ABP active */
       UpdateReady();
+      if (observer_ != nullptr) {
+        observer_->OnReadyForCap();
+      }
     }
   };
 
@@ -1302,7 +1304,7 @@ void WeldControlImpl::AutoBeadPlacementStart(LayerType layer_type) {
                                              config_.fill_layer_groove_depth_threshold, on_cap_notification);
       break;
     case LayerType::CAP:
-      handover_to_abp_cap_timestamp_ = {};
+      handover_to_abp_cap_timestamp_ = steady_clock_now_func_();
       bead_control_->UnregisterCapNotification();
       bead_control_->RegisterFinishedNotification(on_finished);
       bead_control_->NextLayerCap();

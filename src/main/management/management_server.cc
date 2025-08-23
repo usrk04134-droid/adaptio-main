@@ -21,13 +21,11 @@ using management::ManagementServer;
 ManagementServer::ManagementServer(zevs::Socket* socket, joint_geometry::JointGeometryProvider* joint_geometry_provider,
                                    coordination::ActivityStatus* activity_status,
                                    coordination::CalibrationStatus* calibration_status,
-                                   coordination::CalibrationStatus* calibration_status_v2,
                                    weld_control::WeldControl* weld_control, std::function<void()> shutdown_handler)
     : socket_(socket),
       joint_geometry_provider_(joint_geometry_provider),
       activity_status_(activity_status),
       calibration_status_(calibration_status),
-      calibration_status_v2_(calibration_status_v2),
       weld_control_(weld_control),
       shutdown_handler_(shutdown_handler) {
   LOG_DEBUG("Creating ManagementServer");
@@ -64,7 +62,6 @@ ManagementServer::ManagementServer(zevs::Socket* socket, joint_geometry::JointGe
     check_ready_state();
   };
   calibration_status_->Subscribe(on_calibration_changed);
-  calibration_status_v2_->Subscribe(on_calibration_changed);
   activity_status_->Subscribe(check_ready_state);
   joint_geometry_provider_->Subscribe(check_ready_state);
 
@@ -179,8 +176,7 @@ auto ManagementServer::UpdateReadyState() -> bool {
   }
 
   auto laser_to_torch_cal_valid = calibration_status_->LaserToTorchCalibrationValid();
-  auto weld_object_cal_valid =
-      calibration_status_->WeldObjectCalibrationValid() || calibration_status_v2_->WeldObjectCalibrationValid();
+  auto weld_object_cal_valid    = calibration_status_->WeldObjectCalibrationValid();
 
   auto joint_geometry = joint_geometry_provider_->GetJointGeometry();
 
@@ -228,27 +224,27 @@ void ManagementServer::SendReadyState() {
     return;
   }
 
-  common::msg::management::ReadyState data{};
+  auto ready_state = common::msg::management::ReadyState{};
 
   switch (ready_state_) {
     case ReadyState::NOT_READY:
-      data.state = common::msg::management::ReadyState::State::NOT_READY;
+      ready_state.state = common::msg::management::ReadyState::State::NOT_READY;
       break;
     case ReadyState::NOT_READY_AUTO_CAL_MOVE:
-      data.state = common::msg::management::ReadyState::State::NOT_READY_AUTO_CAL_MOVE;
+      ready_state.state = common::msg::management::ReadyState::State::NOT_READY_AUTO_CAL_MOVE;
       break;
     case ReadyState::TRACKING_READY:
-      data.state = common::msg::management::ReadyState::State::TRACKING_READY;
+      ready_state.state = common::msg::management::ReadyState::State::TRACKING_READY;
       break;
     case ReadyState::ABP_READY:
-      data.state = common::msg::management::ReadyState::State::ABP_READY;
+      ready_state.state = common::msg::management::ReadyState::State::ABP_READY;
       break;
     case ReadyState::ABP_CAP_READY:
-      data.state = common::msg::management::ReadyState::State::ABP_CAP_READY;
+      ready_state.state = common::msg::management::ReadyState::State::ABP_CAP_READY;
       break;
   }
 
-  socket_->Send(data);
+  socket_->Send(ready_state);
 }
 
 void ManagementServer::OnNotifyHandoverToManual() {

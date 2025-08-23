@@ -12,7 +12,6 @@
 #include "controller/controller_configuration.h"
 #include "converter.h"
 #include "main/calibration/calibration_configuration.h"
-#include "main/calibration/calibration_types.h"
 #include "main/image_logging/image_logging_configuration.h"
 #include "main/joint_geometry/joint_geometry.h"
 #include "main/weld_control/weld_control_types.h"
@@ -25,8 +24,6 @@ namespace fs = std::filesystem;
 
 const std::string TAG_CONF = "configuration";
 const std::string TAG_SC   = "scanner_calibration";
-const std::string TAG_CWOC = "circular_weld_object_calibration";
-const std::string TAG_LTC  = "laser_torch_calibration";
 
 class ConfigManager {
  public:
@@ -45,8 +42,6 @@ class ConfigManager {
   auto GetCalibrationFixtureJointGeometry() -> joint_geometry::JointGeometry {
     return calibration_joint_geometry_config_;
   }
-  auto GetCircWeldObjectCalib() -> std::pair<std::optional<calibration::WeldObjectCalibration>, ConfigurationHandle*>;
-  auto GetLaserTorchCalib() -> std::pair<std::optional<calibration::LaserTorchCalibration>, ConfigurationHandle*>;
   auto GetWeldControlConfiguration() -> weld_control::Configuration { return weld_control_config_; }
   auto GetTolerancesConfiguration() -> tolerances::Configuration { return tolerances_config_; }
   auto GetCalibrationConfiguration() -> calibration::Configuration { return calibration_config_; }

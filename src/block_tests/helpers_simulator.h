@@ -11,7 +11,6 @@
 
 #include "helpers.h"
 #include "helpers_abp_parameters.h"
-#include "helpers_calibration.h"
 #include "point3d.h"
 #include "sim-config.h"
 #include "weld_system_client/weld_system_types.h"
