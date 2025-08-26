@@ -8,6 +8,7 @@
 #include <regex>
 #include <string>
 #include <utility>
+#include <array>
 
 #include "../web_hmi_json_helpers.h"
 #include "calibration/calibration_manager.h"
@@ -20,6 +21,7 @@
 #include "lpcs/lpcs_slice.h"
 #include "macs/macs_point.h"
 #include "macs/macs_slice.h"
+#include "macs/macs_groove.h"
 #include "version.h"
 #include "web_hmi/src/web_hmi_calibration.h"
 #include "web_hmi/web_hmi.h"
@@ -127,7 +129,17 @@ void WebHmiServer::OnMessage(zevs::MessagePtr message) {
 void WebHmiServer::Receive(const macs::Slice& data, const lpcs::Slice& /*scanner_data*/,
                            const macs::Point& /*axis_position*/, const double /*angle_from_torch_to_scanner*/) {
   // could be an empty optional
-  groove_ = data.groove;
+  if (data.groove.has_value()) {
+    groove_ = data.groove;
+  } else if (data.line.size() >= macs::ABW_POINTS) {
+    std::array<macs::Point, macs::ABW_POINTS> first_points{};
+    for (size_t i = 0; i < macs::ABW_POINTS; ++i) {
+      first_points[i] = data.line[i];
+    }
+    groove_ = macs::Groove(first_points);
+  } else {
+    groove_ = std::nullopt;
+  }
 }
 
 void WebHmiServer::SubscribePattern(std::regex const& pattern, OnRequest on_request) {
