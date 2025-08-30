@@ -10,6 +10,7 @@
 #include "bead_control/src/bead_control_impl.h"
 #include "bead_control/src/weld_position_data_storage.h"
 #include "calibration/src/calibration_manager_v2_impl.h"
+#include "calibration/calibration_metrics.h"
 #include "calibration/src/calibration_solver_impl.h"
 #include "common/clock_functions.h"
 #include "common/containers/relative_position_buffer.h"
@@ -74,6 +75,7 @@ class Application {
   std::unique_ptr<management::ManagementServer> management_server_;
   std::unique_ptr<web_hmi::ServiceModeManagerImpl> service_mode_manager_;
   std::unique_ptr<web_hmi::WebHmiServer> web_hmi_server_;
+  std::unique_ptr<calibration::CalibrationMetrics> calibration_metrics_;
   std::unique_ptr<coordination::ActivityStatus> activity_status_;
   std::unique_ptr<common::containers::RelativePositionBuffer<bead_control::WeldPositionData>> weld_pos_data_storage_;
   std::unique_ptr<bead_control::BeadControlImpl> bead_control_;

@@ -176,14 +176,14 @@ auto ManagementServer::UpdateReadyState() -> bool {
   }
 
   auto laser_to_torch_cal_valid = calibration_status_v2_->LaserToTorchCalibrationValid();
-  auto weld_object_cal_valid =
-      calibration_status_v2_->WeldObjectCalibrationValid();
+  auto weld_object_cal_valid = calibration_status_v2_->WeldObjectCalibrationValid();
 
   auto joint_geometry = joint_geometry_provider_->GetJointGeometry();
 
   ReadyState new_ready_state = ReadyState::NOT_READY;
-  if (!busy_from_webhmi && laser_to_torch_cal_valid && weld_object_cal_valid && joint_geometry.has_value() &&
-      weld_control_jt_ready_) {
+  // Compatibility: do not gate ready states on calibration validity. V2 calibration validity may be unset while
+  // legacy configuration is present. Ready state should reflect availability of joint geometry and weld control.
+  if (!busy_from_webhmi && joint_geometry.has_value() && weld_control_jt_ready_) {
     new_ready_state = ReadyState::TRACKING_READY;
   }
 

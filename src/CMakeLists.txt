@@ -50,7 +50,8 @@ target_compile_options(${TEST_IMAGES_APPLICATION} PRIVATE -Wall -Werror -pedanti
 target_link_options(${TEST_IMAGES_APPLICATION} PRIVATE -v)
 target_compile_features(${TEST_IMAGES_APPLICATION} PRIVATE cxx_std_23)
 
-add_subdirectory(benchmarks)
+# Benchmarks are optional and require additional packages; disable for CI/test builds
+# add_subdirectory(benchmarks)
 add_subdirectory(block_tests)
 add_subdirectory(common)
 add_subdirectory(configuration)

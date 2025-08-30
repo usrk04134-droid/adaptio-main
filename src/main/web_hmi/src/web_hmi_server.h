@@ -13,6 +13,7 @@
 #include "macs/macs_slice.h"
 #include "slice_translator/slice_observer.h"
 #include "web_hmi_calibration.h"
+#include "calibration/calibration_metrics.h"
 
 namespace web_hmi {
 
@@ -20,7 +21,8 @@ class WebHmiServer : public slice_translator::SliceObserver, public WebHmi {
  public:
   WebHmiServer(zevs::CoreSocket* in_socket, zevs::CoreSocket* out_socket,
                joint_geometry::JointGeometryProvider* joint_geometry_provider,
-               kinematics::KinematicsClient* kinematics_client, coordination::ActivityStatus* activity_status);
+               kinematics::KinematicsClient* kinematics_client, coordination::ActivityStatus* activity_status,
+               calibration::CalibrationMetrics* calibration_metrics);
 
   void OnMessage(zevs::MessagePtr message);
 
@@ -41,6 +43,7 @@ class WebHmiServer : public slice_translator::SliceObserver, public WebHmi {
   zevs::CoreSocket* out_socket_;
   kinematics::KinematicsClient* kinematics_client_;
   coordination::ActivityStatus* activity_status_;
+  calibration::CalibrationMetrics* calibration_metrics_;
 
   // Last groove estimate
   std::optional<macs::Groove> groove_;
