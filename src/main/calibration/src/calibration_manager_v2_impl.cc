@@ -161,9 +161,9 @@ void CalibrationManagerV2Impl::OnScannerStarted(bool success) {
 
 void CalibrationManagerV2Impl::OnScannerStopped(bool /*success*/) { /*do nothing*/ };
 
-void CalibrationManagerV2Impl::OnScannerDataUpdate(const lpcs::Slice& data, const macs::Point& axis_position) {
+void CalibrationManagerV2Impl::OnScannerDataUpdateV2(const lpcs::Slice& data, const macs::Point& axis_position) {
   if (sequence_runner_ && sequence_runner_->Busy()) {
-    sequence_runner_->OnScannerDataUpdate(data, axis_position);
+    sequence_runner_->OnScannerDataUpdateV2(data, axis_position);
     return;
   }
 

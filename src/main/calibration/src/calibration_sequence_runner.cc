@@ -78,7 +78,7 @@ void CalibrationSequenceRunner::MoveToCurrentPoint() {
                                         runner_config_.slide_velocity);
 }
 
-void CalibrationSequenceRunner::OnScannerDataUpdate(const lpcs::Slice& data, const macs::Point& axis_position) {
+void CalibrationSequenceRunner::OnScannerDataUpdateV2(const lpcs::Slice& data, const macs::Point& axis_position) {
   if (data.confidence == lpcs::SliceConfidence::NO || !data.groove) {
     return;
   }

@@ -81,7 +81,7 @@ class WeldControlImpl : public WeldControl,
   /* ScannerObserver */
   void OnScannerStarted(bool success) override;
   void OnScannerStopped(bool success) override;
-  void OnScannerDataUpdate(const lpcs::Slice& data, const macs::Point& axis_position) override {};
+  void OnScannerDataUpdateV2(const lpcs::Slice& data, const macs::Point& axis_position) override {};
 
   /* SliceObserver */
   void Receive(const macs::Slice& machine_data, const lpcs::Slice& scanner_data, const macs::Point& slides_actual,

@@ -20,7 +20,7 @@ class ScannerObserver {
 
   virtual void OnScannerStarted(bool success)                                                 = 0;
   virtual void OnScannerStopped(bool success)                                                 = 0;
-  virtual void OnScannerDataUpdate(const lpcs::Slice& data, const macs::Point& axis_position) = 0;
+  virtual void OnScannerDataUpdateV2(const lpcs::Slice& data, const macs::Point& axis_position) = 0;
 };
 
 enum class ScannerSensitivity {
