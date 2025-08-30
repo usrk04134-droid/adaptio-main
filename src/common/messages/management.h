@@ -62,16 +62,16 @@ struct Shutdown {
   enum class Metadata : uint32_t { MESSAGE_ID = 0x05000030 };
 };
 
-struct ReadyForCap {
-  enum class Metadata : uint32_t { MESSAGE_ID = 0x05000031 };
-};
-
 struct ABPCapStart {
   enum class Metadata : uint32_t { MESSAGE_ID = 0x05000032 };
 };
 
 struct ABPCapStop {
   enum class Metadata : uint32_t { MESSAGE_ID = 0x05000033 };
+};
+
+struct GracefulStop {
+  enum class Metadata : uint32_t { MESSAGE_ID = 0x05000034 };
 };
 
 }  // namespace common::msg::management

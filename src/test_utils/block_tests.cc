@@ -16,7 +16,7 @@ auto main(int argc, char** argv) -> int {
   doctest::Context context;
 
   common::logging::InitLogging();
-  common::logging::SetLogLevel(1);  // INFO
+  common::logging::SetLogLevel(3);  // INFO
 
   auto reporters_set_by_caller = false;
 

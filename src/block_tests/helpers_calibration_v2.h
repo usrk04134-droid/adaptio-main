@@ -135,43 +135,6 @@ inline auto WeldObjectCalResult(TestFixture& fixture, deposition_simulator::SimC
   return fmt::format("x: {:.5f} y: {:.5f} z {:.5f}", point.GetX(), point.GetY(), point.GetZ());
 }
 
-inline auto GetSliceData(std::vector<deposition_simulator::Point3d>& abws_lpcs, const std::uint64_t time_stamp)
-    -> common::msg::scanner::SliceData {
-  common::msg::scanner::SliceData slice_data{
-      .groove{{.x = helpers_simulator::ConvertM2Mm(abws_lpcs[0].GetX()),
-               .y = helpers_simulator::ConvertM2Mm(abws_lpcs[0].GetY())},
-              {.x = helpers_simulator::ConvertM2Mm(abws_lpcs[1].GetX()),
-               .y = helpers_simulator::ConvertM2Mm(abws_lpcs[1].GetY())},
-              {.x = helpers_simulator::ConvertM2Mm(abws_lpcs[2].GetX()),
-               .y = helpers_simulator::ConvertM2Mm(abws_lpcs[2].GetY())},
-              {.x = helpers_simulator::ConvertM2Mm(abws_lpcs[3].GetX()),
-               .y = helpers_simulator::ConvertM2Mm(abws_lpcs[3].GetY())},
-              {.x = helpers_simulator::ConvertM2Mm(abws_lpcs[4].GetX()),
-               .y = helpers_simulator::ConvertM2Mm(abws_lpcs[4].GetY())},
-              {.x = helpers_simulator::ConvertM2Mm(abws_lpcs[5].GetX()),
-               .y = helpers_simulator::ConvertM2Mm(abws_lpcs[5].GetY())},
-              {.x = helpers_simulator::ConvertM2Mm(abws_lpcs[6].GetX()),
-               .y = helpers_simulator::ConvertM2Mm(abws_lpcs[6].GetY())}},
-      .line{{.x = helpers_simulator::ConvertM2Mm(abws_lpcs[0].GetX()),
-             .y = helpers_simulator::ConvertM2Mm(abws_lpcs[0].GetY())},
-              {.x = helpers_simulator::ConvertM2Mm(abws_lpcs[1].GetX()),
-             .y = helpers_simulator::ConvertM2Mm(abws_lpcs[1].GetY())},
-              {.x = helpers_simulator::ConvertM2Mm(abws_lpcs[2].GetX()),
-             .y = helpers_simulator::ConvertM2Mm(abws_lpcs[2].GetY())},
-              {.x = helpers_simulator::ConvertM2Mm(abws_lpcs[3].GetX()),
-             .y = helpers_simulator::ConvertM2Mm(abws_lpcs[3].GetY())},
-              {.x = helpers_simulator::ConvertM2Mm(abws_lpcs[4].GetX()),
-             .y = helpers_simulator::ConvertM2Mm(abws_lpcs[4].GetY())},
-              {.x = helpers_simulator::ConvertM2Mm(abws_lpcs[5].GetX()),
-             .y = helpers_simulator::ConvertM2Mm(abws_lpcs[5].GetY())},
-              {.x = helpers_simulator::ConvertM2Mm(abws_lpcs[6].GetX()),
-             .y = helpers_simulator::ConvertM2Mm(abws_lpcs[6].GetY())}  },
-      .confidence = common::msg::scanner::SliceConfidence::HIGH,
-      .time_stamp = time_stamp,
-  };
-  return slice_data;
-}
-
 inline auto NowTimeStamp(TestFixture& fixture) -> uint64_t {
   return fixture.GetClockNowFuncWrapper()->GetSystemClock().time_since_epoch().count();
 }
@@ -179,7 +142,7 @@ inline auto NowTimeStamp(TestFixture& fixture) -> uint64_t {
 inline void ProvideScannerAndKinematicsData(TestFixture& fixture, deposition_simulator::ISimulator& simulator,
                                             const deposition_simulator::Point3d& point) {
   auto abws_lpcs  = helpers_simulator::ConvertFromOptionalAbwVector(simulator.GetAbwPoints(deposition_simulator::LPCS));
-  auto slice_data = GetSliceData(abws_lpcs, NowTimeStamp(fixture));
+  auto slice_data = helpers_simulator::GetSliceData(abws_lpcs, NowTimeStamp(fixture));
   fixture.Scanner()->Dispatch(slice_data);
 
   // Receive GetSlidesPosition

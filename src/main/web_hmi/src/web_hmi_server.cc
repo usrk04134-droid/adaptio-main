@@ -33,7 +33,6 @@ const std::string ADAPTIO_IO = "adaptio_io";
 using web_hmi::WebHmiServer;
 
 WebHmiServer::WebHmiServer(zevs::CoreSocket* in_socket, zevs::CoreSocket* out_socket,
-                           calibration::CalibrationManager* calibration_manager,
                            joint_geometry::JointGeometryProvider* joint_geometry_provider,
                            kinematics::KinematicsClient* kinematics_client,
                            coordination::ActivityStatus* activity_status)
@@ -45,8 +44,6 @@ WebHmiServer::WebHmiServer(zevs::CoreSocket* in_socket, zevs::CoreSocket* out_so
   auto handler = [this](zevs::MessagePtr msg) { this->OnMessage(std::move(msg)); };
   in_socket_->SetHandler(handler);
 
-  calibration_ =
-      std::make_unique<WebHmiCalibration>(out_socket_, calibration_manager, joint_geometry_provider, activity_status_);
 }
 
 auto WebHmiServer::CheckSubscribers(std::string const& topic, nlohmann::json const& payload) -> bool {
@@ -75,11 +72,6 @@ void WebHmiServer::OnMessage(zevs::MessagePtr message) {
       auto response = CreateMessage("GetAdaptioVersionRsp", VersionToPayload(ADAPTIO_VERSION));
       out_socket_->SendWithEnvelope(ADAPTIO_IO, std::move(response));
 
-    } else if (message_name == "LaserToTorchCalibration" || message_name == "WeldObjectCalibration" ||
-               message_name == "GetLaserToTorchCalibration" || message_name == "GetWeldObjectCalibration" ||
-               message_name == "SetLaserToTorchCalibration" || message_name == "SetWeldObjectCalibration") {
-      calibration_->OnMessage(message_name, payload);
-
     } else if (message_name == "GetSlidesPosition") {
       auto on_get_slides_position = [this](std::uint64_t /*time_stamp*/, double horizontal, double vertical) {
         auto payload = PositionToPayload(horizontal, vertical);
@@ -100,7 +92,8 @@ void WebHmiServer::OnMessage(zevs::MessagePtr message) {
       out_socket_->SendWithEnvelope(ADAPTIO_IO, std::move(message));
 
     } else if (message_name == "GetGroove") {
-      nlohmann::json payload;
+      nlohmann::json payload = nlohmann::json::object();
+      LOG_DEBUG("GetGroove: groove_ available: {}", groove_->ToString());
       if (groove_) {
         payload = GrooveToPayload(groove_.value());
       }
@@ -128,6 +121,7 @@ void WebHmiServer::Receive(const macs::Slice& data, const lpcs::Slice& /*scanner
                            const macs::Point& /*axis_position*/, const double /*angle_from_torch_to_scanner*/) {
   // could be an empty optional
   groove_ = data.groove;
+  LOG_DEBUG("GetGroove: groove_ available: {}", groove_->ToString());
 }
 
 void WebHmiServer::SubscribePattern(std::regex const& pattern, OnRequest on_request) {

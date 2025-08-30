@@ -61,7 +61,7 @@ class WeldControlImpl : public WeldControl,
                            clock_functions::SystemClockNowFunc system_clock_now_func,
                            clock_functions::SteadyClockNowFunc steady_clock_now_func, prometheus::Registry* registry,
                            image_logging::ImageLoggingManager* image_logging_manager,
-                           slice_translator::SliceTranslatorServiceV2* slice_translator_v2);
+                           slice_translator::SliceTranslatorServiceV2* slice_translator_v2, SQLite::Database* db);
 
   /* WeldControl */
   void JointTrackingStart(const joint_geometry::JointGeometry& joint_geometry,
@@ -107,7 +107,7 @@ class WeldControlImpl : public WeldControl,
   slice_translator::SliceTranslatorServiceV2* slice_translator_v2_;
   bead_control::BeadControl* bead_control_;
   DelayBuffer* delay_buffer_;
-  std::unique_ptr<ConfidentSliceBuffer> confident_slice_buffer_;
+  ConfidentSliceBuffer confident_slice_buffer_;
   common::logging::ComponentLogger weld_logger_;
   WeldControlObserver* observer_{nullptr};
   std::chrono::time_point<std::chrono::system_clock> last_log_;
@@ -115,7 +115,6 @@ class WeldControlImpl : public WeldControl,
   State state_{State::IDLE};
   LayerType abp_layer_type_{LayerType::FILL};
   std::vector<WeldStateObserver*> weld_state_observers_;
-  bool groove_finished_{false};
 
   double cached_weld_axis_position_{0.0};
   double cached_weld_axis_ang_velocity_{0.0};

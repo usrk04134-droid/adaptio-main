@@ -1,8 +1,0 @@
-weld_control:
-  scanner_input_interval_ms: 1884
-  adaptivity:
-    gaussian_filter:
-      kernel_size: 9
-      sigma: 3.0
-  fill_layer_groove_depth_threshold: 14.0
-  handover_grace_seconds: 3

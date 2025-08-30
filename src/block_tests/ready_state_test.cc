@@ -18,6 +18,7 @@
 TEST_SUITE("Ready state") {
   TEST_CASE("Basic") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     StoreDefaultJointGeometryParams(fixture);
 
@@ -44,6 +45,7 @@ TEST_SUITE("Ready state") {
 
   TEST_CASE("ABP ready 1") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     StoreDefaultJointGeometryParams(fixture);
 
@@ -63,6 +65,7 @@ TEST_SUITE("Ready state") {
 
   TEST_CASE("ABP ready 2") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     StoreDefaultJointGeometryParams(fixture);
 
@@ -85,6 +88,7 @@ TEST_SUITE("Ready state") {
 
   TEST_CASE("ABP / JT ready no edge-sensor") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     StoreDefaultJointGeometryParams(fixture);
     StoreDefaultABPParams(fixture);
@@ -103,6 +107,7 @@ TEST_SUITE("Ready state") {
 
   TEST_CASE("ABP / JT ready edge-sensor") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     StoreDefaultJointGeometryParams(fixture);
     StoreDefaultABPParams(fixture);

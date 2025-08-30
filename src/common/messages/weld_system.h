@@ -19,8 +19,8 @@ struct GetWeldSystemDataRsp {
 
   float voltage{0.0};
   float current{0.0};
-  float wire_lin_velocity{0.0};
-  float deposition_rate{0.0};
+  float wire_lin_velocity{0.0};  // mm/sec
+  float deposition_rate{0.0};    // kg/h
   float heat_input{0.0};
   bool twin_wire{false};
   float wire_diameter{0.0};

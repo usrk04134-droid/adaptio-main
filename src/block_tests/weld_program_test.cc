@@ -1,6 +1,4 @@
 #include <doctest/doctest.h>
-#include <SQLiteCpp/Database.h>
-#include <SQLiteCpp/Statement.h>
 
 #include <nlohmann/json_fwd.hpp>
 #include <string>
@@ -17,6 +15,7 @@ static const bool EXPECT_FAIL = false;
 TEST_SUITE("WeldProgram") {
   TEST_CASE("store_update_get") {
     TestFixture fixture;
+    fixture.StartApplication();
     /* Store weld-program including a layer with weld-data-set that does not exist */
     nlohmann::json layers = nlohmann::json::array();
     layers.push_back({
@@ -54,9 +53,8 @@ TEST_SUITE("WeldProgram") {
   }
 
   TEST_CASE("weld_program_fetch_from_database") {
-    /* populate the database with weld-program before starting the application to test
-     * that previously stored program is fetched from the database during startup */
-    SQLite::Database database(":memory:", SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE);
+    /* The database will be populated when started the first time. The second time the application is started the data
+     * will be read from the database */
 
     nlohmann::json layers = nlohmann::json::array();
     layers.push_back({
@@ -70,18 +68,15 @@ TEST_SUITE("WeldProgram") {
         {"layers",   layers    }
     };
 
-    {
-      // populate the database
-      TestFixture fixture1(&database);
-      CHECK(AddWeldDataSet(fixture1, "root1", 1, 2, EXPECT_OK));
-      CHECK(StoreWeldProgram(fixture1, payload, EXPECT_OK));
-    }
+    TestFixture fixture;
+    fixture.StartApplication();
+    CHECK(AddWeldDataSet(fixture, "root1", 1, 2, EXPECT_OK));
+    CHECK(StoreWeldProgram(fixture, payload, EXPECT_OK));
 
-    // Instantiate a new application with the populated database
-    TestFixture fixture2(&database);
+    fixture.StartApplication();
     auto expected  = payload;
     expected["id"] = 1;  // added when stored to db
-    CHECK(CheckWeldProgramsEqual(fixture2, nlohmann::json::array({expected})));
+    CHECK(CheckWeldProgramsEqual(fixture, nlohmann::json::array({expected})));
   }
 }
 // NOLINTEND(*-magic-numbers, *-optional-access, hicpp-signed-bitwise)

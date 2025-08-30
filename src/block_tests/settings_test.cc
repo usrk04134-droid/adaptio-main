@@ -8,6 +8,7 @@ const bool EXPECT_OK = true;
 TEST_SUITE("Settings") {
   TEST_CASE("store_update_get") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     /* Store settings successfully */
     auto settings = TestSettings{.use_edge_sensor = true, .edge_sensor_placement = "right"};
@@ -21,6 +22,7 @@ TEST_SUITE("Settings") {
 
   TEST_CASE("edge_sensor_placement_values") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     /* Test left placement */
     auto settings = TestSettings{.use_edge_sensor = true, .edge_sensor_placement = "left"};

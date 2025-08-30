@@ -28,7 +28,7 @@ const int MAX_ALLOWED_SIDE_GAP           = 600;
 const double ANGLE_INSENSITIVITY         = 0.5;
 const double SURFACE_ANGLE_INSENSITIVITY = 0.9;
 const double MOVE_DISTANCE               = 3.0;
-const int NUM_COLUMNS_TO_LOOK_FOR_START  = 9;
+const int START_COL_CONSECUTIVE          = 10;
 const int PIXEL_RANGE_INSET              = 10;
 
 /*
@@ -89,36 +89,10 @@ auto Snake::FromImage(const image::Image& image, const std::optional<image::RawI
   const int NUM_POINTS_TO_ERASE_WHEN_LEAVING_SURFACE_MODE = 6;
 
   return FindStartColumn(image, threshold, side)
-      .and_then([image, threshold, side](int column) -> std::optional<Point> {
-        // 1. Find centroids for this column and the next 10 columns
-        // 2. Get median y
-        auto rows = std::vector<double>();
-        for (int dx = 0; dx < NUM_COLUMNS_TO_LOOK_FOR_START; dx++) {
-          int c;
-          switch (side) {
-            case StartingPoint::Left:
-              c = column + dx;
-              break;
-            case StartingPoint::Right:
-              c = column - dx;
-              break;
-          }
-          if (c >= 0 && c < image.Data().cols()) {
-            auto centroid = GetCentroidForSingleColumn(image.Data().col(c),
-                                                       common::math::CentroidSearchDirection::Reversed, threshold);
-            if (centroid.has_value()) {
-              rows.push_back(centroid.value());
-            }
-          }
-        }
-        if (rows.size() > 0) {
-          const auto row = common::math::value::FindMedian(rows.begin(), rows.end(), rows.size());
-          return {
-              Point{static_cast<double>(column), row}
-          };
-        } else {
-          return std::nullopt;
-        }
+      .and_then([image, threshold](int column) {
+        return GetCentroidForSingleColumn(image.Data().col(column), common::math::CentroidSearchDirection::Reversed,
+                                          threshold)
+            .transform([column](double row) { return Point{static_cast<double>(column), row}; });
       })
       .and_then([image, mask, side, threshold, horizontal_limit](struct Point starting_point) {
         struct Snake snake;
@@ -222,11 +196,34 @@ auto Snake::FindStartColumn(const image::Image& image, uint8_t threshold, enum S
   const int first = (side == StartingPoint::Left) ? image.StartCol() : (image.StopCol() - 1);
   const int delta = (side == StartingPoint::Left) ? 1 : -1;
   const int last  = (side == StartingPoint::Left) ? image.StartCol() + MAX_ALLOWED_SIDE_GAP
-                                                  : (image.StopCol() - MAX_ALLOWED_SIDE_GAP);
+                                                  : (image.StopCol() - MAX_ALLOWED_SIDE_GAP) - 1;
+  // Try to find the start column of the laser line.
 
-  for (int column = first; column != last; column += delta) {
-    if (image.Data().col(column).maxCoeff() > threshold) {
-      return std::make_optional(column);
+  // Check if the image is vertically cropped
+  // If so there is no risk of seeing the edge of the object
+  if (image.StartCol() > 0) {
+    for (int column = first; column != last; column += delta) {
+      if (image.Data().col(column).maxCoeff() > threshold) {
+        return std::make_optional(column);
+      }
+    }
+  } else {
+    // The image is not verticaly cropped
+    // Use a higher threshold than normal and find 10 consecutive columns with max value higher than threshold.
+    auto start_threshold = std::min(threshold * 3, 64);
+
+    for (int column = first; column != last; column += delta * START_COL_CONSECUTIVE) {
+      bool all_above = true;
+      for (int c = column; c != column + delta * START_COL_CONSECUTIVE; c += delta) {
+        if (image.Data().col(c).maxCoeff() <= start_threshold) {
+          all_above = false;
+          break;
+        }
+      }
+
+      if (all_above) {
+        return std::make_optional(column);
+      }
     }
   }
 

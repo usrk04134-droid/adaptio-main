@@ -20,13 +20,11 @@ using management::ManagementServer;
 
 ManagementServer::ManagementServer(zevs::Socket* socket, joint_geometry::JointGeometryProvider* joint_geometry_provider,
                                    coordination::ActivityStatus* activity_status,
-                                   coordination::CalibrationStatus* calibration_status,
                                    coordination::CalibrationStatus* calibration_status_v2,
                                    weld_control::WeldControl* weld_control, std::function<void()> shutdown_handler)
     : socket_(socket),
       joint_geometry_provider_(joint_geometry_provider),
       activity_status_(activity_status),
-      calibration_status_(calibration_status),
       calibration_status_v2_(calibration_status_v2),
       weld_control_(weld_control),
       shutdown_handler_(shutdown_handler) {
@@ -63,7 +61,6 @@ ManagementServer::ManagementServer(zevs::Socket* socket, joint_geometry::JointGe
     weld_control_->ResetGrooveData();
     check_ready_state();
   };
-  calibration_status_->Subscribe(on_calibration_changed);
   calibration_status_v2_->Subscribe(on_calibration_changed);
   activity_status_->Subscribe(check_ready_state);
   joint_geometry_provider_->Subscribe(check_ready_state);
@@ -178,9 +175,9 @@ auto ManagementServer::UpdateReadyState() -> bool {
       break;
   }
 
-  auto laser_to_torch_cal_valid = calibration_status_->LaserToTorchCalibrationValid();
+  auto laser_to_torch_cal_valid = calibration_status_v2_->LaserToTorchCalibrationValid();
   auto weld_object_cal_valid =
-      calibration_status_->WeldObjectCalibrationValid() || calibration_status_v2_->WeldObjectCalibrationValid();
+      calibration_status_v2_->WeldObjectCalibrationValid();
 
   auto joint_geometry = joint_geometry_provider_->GetJointGeometry();
 
@@ -262,19 +259,14 @@ void ManagementServer::OnGrooveDataTimeout() {
   StopActiveFunction();
 }
 
-void ManagementServer::OnReadyForCap() {
-  LOG_DEBUG("Ready for cap");
-  socket_->Send(common::msg::management::ReadyForCap{});
-}
-
 void ManagementServer::OnError() {
   LOG_DEBUG("OnError, stop joint tracking / abp");
   socket_->Send(common::msg::management::ScannerError{});
   StopActiveFunction();
 }
 
-void ManagementServer::OnGrooveFinished() {
-  LOG_DEBUG("Groove finished");
-  socket_->Send(common::msg::management::ScannerError{});
+void ManagementServer::OnGracefulStop() {
+  LOG_DEBUG("Graceful Stop");
+  socket_->Send(common::msg::management::GracefulStop{});
   StopActiveFunction();
 }

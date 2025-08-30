@@ -44,6 +44,7 @@ TEST_SUITE("Coordinate_systems") {
   // shift the MACS data in the negative horizontal direction.
   TEST_CASE("Orientation") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     StoreDefaultJointGeometryParams(fixture);
     // Start Joint tracking (to have the scanner in starte)

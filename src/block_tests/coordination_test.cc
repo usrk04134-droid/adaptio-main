@@ -30,6 +30,7 @@ const auto ACTIVITY_STATUS_TRACKING = static_cast<uint32_t>(coordination::Activi
 TEST_SUITE("Coordination") {
   TEST_CASE("Activity_status") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     StoreSettings(fixture, TestSettings{.use_edge_sensor = false}, true);
     StoreDefaultJointGeometryParams(fixture);
@@ -93,6 +94,7 @@ TEST_SUITE("Coordination") {
 
   TEST_CASE("Double_start") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     StoreDefaultJointGeometryParams(fixture);
     // Start Joint tracking

@@ -77,4 +77,7 @@ inline auto GetWeldControlStatus(TestFixture& fixture) -> WeldControlStatus {
 }
 
 inline auto StartABP(TestFixture& fixture) { fixture.Management()->Dispatch(common::msg::management::ABPStart{}); }
+inline auto StartABPCap(TestFixture& fixture) {
+  fixture.Management()->Dispatch(common::msg::management::ABPCapStart{});
+}
 // NOLINTEND(readability-function-cognitive-complexity)

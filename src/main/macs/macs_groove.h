@@ -112,6 +112,40 @@ class Groove {
     return valid;
   }
 
+  auto ToJson() const -> nlohmann::json {
+    auto json_groove = nlohmann::json::array();
+    for (auto const& point : groove_) {
+      nlohmann::json point_json = {
+          {"horizontal", point.horizontal},
+          {"vertical",   point.vertical  }
+      };
+      json_groove.push_back(point_json);
+    }
+    return json_groove;
+  }
+
+  static auto FromJson(const nlohmann::json& json_obj) -> std::optional<Groove> {
+    try {
+      if (!json_obj.is_array() || json_obj.size() != ABW_POINTS) {
+        return std::nullopt;
+      }
+
+      Groove groove;
+      for (size_t i = 0; i < ABW_POINTS; ++i) {
+        auto const& point_json = json_obj[i];
+        groove[i]              = {
+                         .horizontal = point_json.at("horizontal").get<double>(),
+                         .vertical   = point_json.at("vertical").get<double>(),
+        };
+      }
+
+      return groove;
+    } catch (const nlohmann::json::exception& e) {
+      LOG_ERROR("Failed to parse Groove from JSON - exception: {}", e.what());
+      return std::nullopt;
+    }
+  }
+
   // iterator API
   // NOLINTBEGIN(readability-identifier-naming)
   using iterator       = Point*;

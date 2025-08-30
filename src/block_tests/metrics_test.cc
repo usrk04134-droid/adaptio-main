@@ -11,6 +11,7 @@
 TEST_SUITE("Metrics") {
   TEST_CASE("metrics_collect") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     // Starting calibration will increase counter
     nlohmann::json payload({

@@ -47,6 +47,7 @@ const nlohmann::json WPP_2 = {
 TEST_SUITE("WeldProcessParameters") {
   TEST_CASE("add_get") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     /* Store Weld process parameters successfully */
     AddWeldProcessParameters(fixture, WPP_1, EXPECT_OK);
@@ -66,6 +67,7 @@ TEST_SUITE("WeldProcessParameters") {
 
   TEST_CASE("add_conflict") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     /* Store Weld process parameters twice, name conflict */
     AddWeldProcessParameters(fixture, WPP_1, EXPECT_OK);
@@ -74,6 +76,7 @@ TEST_SUITE("WeldProcessParameters") {
 
   TEST_CASE("add_invalid") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     /* Invalid WPP*/
     auto invalid_wpp      = WPP_1;

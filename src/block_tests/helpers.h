@@ -11,23 +11,31 @@
 #include "common/clock_functions.h"
 #include "common/messages/scanner.h"
 #include "common/zevs/zevs_test_support.h"
+#include "mocks/config_manager_mock.h"
 
 class ApplicationWrapper {
  public:
-  explicit ApplicationWrapper(SQLite::Database *database, clock_functions::SystemClockNowFunc system_clock_now_func,
-                              clock_functions::SteadyClockNowFunc steady_clock_now_func,
-                              std::filesystem::path test_cofig_file);
+  explicit ApplicationWrapper(SQLite::Database *database, configuration::ConfigManagerMock *config_manager,
+                              clock_functions::SystemClockNowFunc system_clock_now_func,
+                              clock_functions::SteadyClockNowFunc steady_clock_now_func);
   void Start();
+  void Exit();
   auto InShutdown() const -> bool;
   auto Registry() -> prometheus::Registry *;
   auto GetWeldControlConfig() -> weld_control::Configuration;
+  auto GetConfigManagerMock() -> configuration::ConfigManagerMock *;
 
  private:
-  std::unique_ptr<configuration::ConfigManager> configuration_;
+  configuration::ConfigManagerMock *configuration_;
   std::unique_ptr<Application> application_;
   clock_functions::SystemClockNowFunc system_clock_now_func_;
   clock_functions::SteadyClockNowFunc steady_clock_now_func_;
   std::shared_ptr<prometheus::Registry> registry_;
+
+  // Parameters for Application construction
+  SQLite::Database *database_;
+  std::filesystem::path events_path_;
+  std::filesystem::path logs_path_;
 };
 
 class ClockNowFuncWrapper {
@@ -82,8 +90,6 @@ class TimerWrapper {
 class TestFixture {
  public:
   explicit TestFixture();
-  explicit TestFixture(std::filesystem::path test_config_file);
-  explicit TestFixture(SQLite::Database *database, std::filesystem::path test_config_file = {});
   auto DescribeQueue() const -> std::string;
 
   auto Factory() -> zevs::MocketFactory *;
@@ -97,10 +103,15 @@ class TestFixture {
 
   auto ScannerData() -> ScannerDataWrapper *;
   auto Sut() -> ApplicationWrapper *;
+  auto GetDatabase() -> SQLite::Database *;
+  auto GetConfigManagerMock() -> configuration::ConfigManagerMock *;
 
   void SetupTimerWrapper();
+  void SetupDefaultConfiguration();
   auto GetClockNowFuncWrapper() -> ClockNowFuncWrapper *;
   auto GetTimerWrapper() -> TimerWrapper *;
+  void StartApplication();
+  void StopApplication();
 
  private:
   auto StartedOK() const -> bool;
@@ -119,8 +130,8 @@ class TestFixture {
   zevs::MocketPtr weld_system_mocket_;
   zevs::MocketTimerPtr timer_mocket_;
 
-  SQLite::Database *ptr_database_;
   SQLite::Database database_;
   std::shared_ptr<ClockNowFuncWrapper> clock_now_func_wrapper_;
   std::shared_ptr<TimerWrapper> timer_wrapper_;
+  std::unique_ptr<configuration::ConfigManagerMock> config_manager_mock_;
 };

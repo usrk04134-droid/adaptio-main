@@ -4,7 +4,9 @@
 #include <SQLiteCpp/Database.h>
 
 #include <array>
+#include <chrono>
 #include <cmath>
+#include <cstdint>
 #include <exception>
 #include <filesystem>
 #include <functional>
@@ -38,9 +40,10 @@
 
 namespace {
 
-const double MIN_TOUCH_WIDTH_RATIO = 0.5;   // ratio of groove width
-const double MAX_TOUCH_WIDTH_RATIO = 0.95;  // ratio of groove width
-const double RSE_LIMIT             = 1.0;   // Residual standard error limit for successful calibration
+const double MIN_TOUCH_WIDTH_RATIO               = 0.5;   // ratio of groove width
+const double MAX_TOUCH_WIDTH_RATIO               = 0.95;  // ratio of groove width
+const double RSE_LIMIT                           = 1.0;   // Residual standard error limit for successful calibration
+const uint32_t HIGH_CONFIDENCE_DATA_MAX_WAIT_SEC = 3;     // Wait time for data with high confidence level
 
 const auto SUCCESS_PAYLOAD = nlohmann::json{
     {"result", "ok"}
@@ -159,16 +162,13 @@ void CalibrationManagerV2Impl::OnScannerStarted(bool success) {
 void CalibrationManagerV2Impl::OnScannerStopped(bool /*success*/) { /*do nothing*/ };
 
 void CalibrationManagerV2Impl::OnScannerDataUpdate(const lpcs::Slice& data, const macs::Point& axis_position) {
-  if (data.confidence == lpcs::SliceConfidence::NO) {
-    return;
-  }
-
   if (sequence_runner_ && sequence_runner_->Busy()) {
     sequence_runner_->OnScannerDataUpdate(data, axis_position);
     return;
   }
 
-  if (data.time_stamp < procedure_start_time_) {
+  // Convert procedure_start_time to raw ticks for comparison with data.time_stamp (uint64_t)
+  if (data.time_stamp < procedure_start_time_.time_since_epoch().count()) {
     return;
   }
 
@@ -184,9 +184,12 @@ void CalibrationManagerV2Impl::OnScannerDataUpdate(const lpcs::Slice& data, cons
 }
 
 void CalibrationManagerV2Impl::HandleLeftPosData(const lpcs::Slice& data, const macs::Point& axis_position) {
-  if (!data.groove) {
-    LOG_ERROR("Groove data not available (left touch)");
-    (*calibration_left_pos_procedure_)({});
+  if (CheckProcedureExpired()) {
+    HandleLeftTouchFailure("Procedure expired (no scanner data)");
+    return;
+  }
+
+  if (data.confidence == lpcs::SliceConfidence::NO || !data.groove) {
     return;
   }
 
@@ -195,9 +198,12 @@ void CalibrationManagerV2Impl::HandleLeftPosData(const lpcs::Slice& data, const 
 }
 
 void CalibrationManagerV2Impl::HandleRightPosData(const lpcs::Slice& data, const macs::Point& axis_position) {
-  if (!data.groove) {
-    LOG_ERROR("Groove data not available (right touch)");
-    (*calibration_right_pos_procedure_)({});
+  if (CheckProcedureExpired()) {
+    HandleRightTouchFailure("Procedure expired (no scanner data)");
+    return;
+  }
+
+  if (data.confidence == lpcs::SliceConfidence::NO || !data.groove) {
     return;
   }
 
@@ -206,8 +212,15 @@ void CalibrationManagerV2Impl::HandleRightPosData(const lpcs::Slice& data, const
 }
 
 // coordination::CalibrationStatus
-auto CalibrationManagerV2Impl::LaserToTorchCalibrationValid() const -> bool { return false; };
-auto CalibrationManagerV2Impl::WeldObjectCalibrationValid() const -> bool { return false; };
+auto CalibrationManagerV2Impl::LaserToTorchCalibrationValid() const -> bool {
+  return laser_torch_configuration_storage_.Get().has_value();
+};
+auto CalibrationManagerV2Impl::WeldObjectCalibrationValid() const -> bool {
+  // Consider weld-object calibration valid only if both LTC and WO calibration are stored and model is configured
+  const auto ltc = laser_torch_configuration_storage_.Get();
+  const auto woc = calibration_result_storage_.Get();
+  return ltc.has_value() && woc.has_value();
+};
 void CalibrationManagerV2Impl::Subscribe(std::function<void()> subscriber) {
   calibration_status_subscriber_ = subscriber;
 };
@@ -219,8 +232,13 @@ auto CalibrationManagerV2Impl::Busy() const -> bool {
          calibration_right_pos_procedure_.has_value() || sequence_runner_;
 }
 
-void CalibrationManagerV2Impl::SetProcedureStartTime() {
-  procedure_start_time_ = system_clock_now_func_().time_since_epoch().count();
+void CalibrationManagerV2Impl::SetProcedureStartTime() { procedure_start_time_ = system_clock_now_func_(); }
+
+auto CalibrationManagerV2Impl::CheckProcedureExpired() -> bool {
+  const auto now      = system_clock_now_func_();
+  const auto deadline = procedure_start_time_ + std::chrono::seconds(HIGH_CONFIDENCE_DATA_MAX_WAIT_SEC);
+
+  return now > deadline;
 }
 
 void CalibrationManagerV2Impl::SubscribeWebHmi() {
@@ -362,7 +380,7 @@ void CalibrationManagerV2Impl::OnWeldObjectCalStart(const nlohmann::json& payloa
     calibration_start_procedure_ = {};
   };
 
-  scanner_client_->Start({.sensitivity = scanner_client::ScannerSensitivity::HIGH}, *joint_geometry);
+  scanner_client_->Start({}, *joint_geometry);
 }
 
 void CalibrationManagerV2Impl::SendCalibrationStartFailure(const std::string& reason) {

@@ -34,7 +34,7 @@ inline void UnpackMessage(const zevs::MessagePtr& message, std::string& message_
     payload      = json_obj.at("payload");
   } else {
     message_name = "";
-    payload      = "";
+    payload      = nlohmann::json::object();
   }
 }
 

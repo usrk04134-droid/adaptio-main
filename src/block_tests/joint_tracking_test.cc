@@ -26,6 +26,7 @@ const float VERTICAL_OFFSET   = 20.0;
 TEST_SUITE("Joint_tracking") {
   TEST_CASE("basic_sequence") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     StoreSettings(fixture, TestSettings{.use_edge_sensor = false}, true);
     StoreDefaultJointGeometryParams(fixture);

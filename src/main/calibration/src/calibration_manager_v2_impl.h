@@ -2,6 +2,8 @@
 
 #include <prometheus/registry.h>
 
+#include <chrono>
+
 #include "calibration/calibration_metrics.h"
 #include "calibration_sequence_runner.h"
 #include "calibration_solver.h"
@@ -46,6 +48,7 @@ class CalibrationManagerV2Impl : public scanner_client::ScannerObserver, public 
   void OnTimeout();
   void SubscribeWebHmi();
   void SetProcedureStartTime();
+  auto CheckProcedureExpired() -> bool;
   auto Busy() const -> bool;
   void StopCalibration();
 
@@ -123,7 +126,7 @@ class CalibrationManagerV2Impl : public scanner_client::ScannerObserver, public 
   RunnerConfiguration runner_config_;
   common::logging::ComponentLogger calibration_logger_;
   std::function<void()> calibration_status_subscriber_;
-  uint64_t procedure_start_time_;
+  std::chrono::time_point<std::chrono::system_clock> procedure_start_time_;
 
   std::unique_ptr<CalibrationMetrics> cal_metrics_;
 };

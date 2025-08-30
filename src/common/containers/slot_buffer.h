@@ -5,6 +5,22 @@
 
 namespace common::containers {
 
+/**
+ * A circular buffer that maps continuous indices to discrete slots.
+ *
+ * SlotBuffer divides a continuous range [0, wrap_value) into a fixed number of slots.
+ * Values are stored based on their index position, with indices wrapping around
+ * when they exceed wrap_value.
+ *
+ * Example: For 100 slots over range [0, 2π):
+ * - Each slot covers 2π/100 ≈ 0.0628 radians
+ * - Index 0.0 maps to slot 0
+ * - Index π maps to slot 49 (truncated)
+ * - Index 2π maps to slot 0 (wraps around)
+ *
+ * The buffer only stores one value per slot. Storing to the same slot multiple
+ * times will update the stored value.
+ */
 template <typename V>
 class SlotBuffer {
  public:
@@ -29,16 +45,27 @@ class SlotBuffer {
 
   auto operator=(SlotBuffer &&) -> SlotBuffer & = delete;
 
-  auto Store(double index, V value) {
-    filled_slots_               += !data_[CalculateSlot(index)].has_value() ? 1 : 0;
-    data_[CalculateSlot(index)]  = {index, value};
+  auto Store(double index, V value) -> bool {
+    auto const slot = CalculateSlot(index);
+    if (last_slot_.has_value() && last_slot_.value() == slot) {
+      return false;  // Same slot, no update
+    }
+
+    filled_slots_ += !data_[slot].has_value() ? 1 : 0;
+    data_[slot]    = {index, value};
+    last_slot_     = slot;
+
+    return true;  // New slot, updated
   }
 
-  auto Get(double index) -> std::optional<std::pair<double, V>> { return data_[CalculateSlot(index)]; }
+  auto Get(double index) const -> std::optional<std::pair<double, V>> { return data_[CalculateSlot(index)]; }
 
-  auto Clear() { data_ = std::make_unique<std::optional<std::pair<double, V>>[]>(number_of_slots_); }
+  auto Clear() {
+    data_ = std::make_unique<std::optional<std::pair<double, V>>[]>(number_of_slots_);
+    last_slot_.reset();
+  }
 
-  auto Empty() -> bool {
+  auto Empty() const -> bool {
     for (int i = 0; i < number_of_slots_; i++) {
       if (data_[i].has_value()) {
         return false;
@@ -48,9 +75,13 @@ class SlotBuffer {
     return true;
   }
 
-  auto Filled() -> bool { return filled_slots_ == number_of_slots_; }
-  auto FilledSlots() -> size_t { return filled_slots_; }
-  auto Slots() -> size_t { return number_of_slots_; }
+  auto Filled() const -> bool { return filled_slots_ == number_of_slots_; }
+  auto FilledSlots() const -> size_t { return filled_slots_; }
+  auto Slots() const -> size_t { return number_of_slots_; }
+
+  auto CalculateSlot(double index) const -> size_t {
+    return static_cast<size_t>(std::fmod(index, wrap_value_) / slot_size_);
+  }
 
  protected:
   std::unique_ptr<std::optional<std::pair<double, V>>[]> data_;
@@ -58,10 +89,7 @@ class SlotBuffer {
   double wrap_value_{};
   double slot_size_{};
   size_t filled_slots_{};
-
-  auto CalculateSlot(double index) const -> size_t {
-    return static_cast<size_t>(std::fmod(index, wrap_value_) / slot_size_);
-  }
+  std::optional<size_t> last_slot_{};
 };
 
 }  // namespace common::containers

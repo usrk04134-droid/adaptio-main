@@ -39,7 +39,7 @@ class CalibrationSequenceRunner {
   void MoveToCurrentPoint();
   void StartStabilizationTimer();
   void OnStabilizationComplete();
-  void RecordObservation(const lpcs::Slice& data, const macs::Point& axis_position);
+  void RecordObservation(const Observation& observation);
   void HandleTimeout();
   void CancelTimers();
   void CancelTimeout();

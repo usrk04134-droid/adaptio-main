@@ -10,10 +10,11 @@ target_sources(${BLOCK_TESTS_APPLICATION}
     helpers_json_compare.h
     helpers_calibration_v2.h
     helpers_settings.h
+    helpers_state_monitor.h
+    mocks/config_manager_mock.h
 
     helpers.cc
     joint_tracking_test.cc
-    calibration_test.cc
     coordination_test.cc
     coordinate_systems_test.cc
     weld_data_set_test.cc
@@ -23,7 +24,6 @@ target_sources(${BLOCK_TESTS_APPLICATION}
     shutdown_test.cc
     scanner_test.cc
     ready_state_test.cc
-    basic_abp_welding_test.cc
     weld_process_parameters_test.cc
     adaptive_welding_test.cc
     metrics_test.cc

@@ -1,7 +1,5 @@
 
 #include <doctest/doctest.h>
-#include <SQLiteCpp/Database.h>
-#include <SQLiteCpp/Statement.h>
 
 #include <nlohmann/json_fwd.hpp>
 #include <string>
@@ -18,6 +16,7 @@ static const bool EXPECT_FAIL = false;
 TEST_SUITE("WeldDataSet") {
   TEST_CASE("weld_data_set_web_hmi") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     /* no stored weld data sets -> empty json array */
     nlohmann::json payload2 = nlohmann::json::array();
@@ -72,6 +71,7 @@ TEST_SUITE("WeldDataSet") {
 
   TEST_CASE("weld_data_set_validation_failed") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     /* add a weld data set that will fail the validation - invalid name */
     CHECK(AddWeldDataSet(fixture, "", 7, 8, EXPECT_FAIL));
@@ -82,17 +82,16 @@ TEST_SUITE("WeldDataSet") {
   }
 
   TEST_CASE("weld_data_set_fetch_from_database") {
-    /* populate the database with weld data before starting the application to test
-     * that previously stored data is fetched from the database during startup */
-    SQLite::Database database(":memory:", SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE);
-    {
-      // populate the database
-      TestFixture fixture1(&database);
-      CHECK(AddWeldDataSet(fixture1, "weld_params1", 1, 2, EXPECT_OK));
-    }
+    /* The database will be populated when started the first time. The second time the application is started the data
+     * will be read from the database */
+    TestFixture fixture;
+    fixture.StartApplication();
+    CHECK(AddWeldDataSet(fixture, "weld_params1", 1, 2, EXPECT_OK));
+
+    fixture.StopApplication();
 
     // Instantiate a new application with the populated database
-    TestFixture fixture2(&database);
+    fixture.StartApplication();
     nlohmann::json expected = nlohmann::json::array();
     expected.push_back(nlohmann::json({
         {"id",       1             },
@@ -100,11 +99,12 @@ TEST_SUITE("WeldDataSet") {
         {"ws1WppId", 1             },
         {"ws2WppId", 2             }
     }));
-    CHECK_EQ(GetWeldDataSets(fixture2), expected);
+    CHECK_EQ(GetWeldDataSets(fixture), expected);
   }
 
   TEST_CASE("remove_used_weld_data_set") {
     TestFixture fixture;
+    fixture.StartApplication();
     /* Check that it is not possible to remove a weld-data-set that is
      * used by a weld-program */
 

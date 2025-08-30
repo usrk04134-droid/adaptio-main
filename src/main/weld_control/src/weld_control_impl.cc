@@ -4,6 +4,7 @@
 #include <prometheus/counter.h>
 #include <prometheus/gauge.h>
 #include <prometheus/registry.h>
+#include <SQLiteCpp/Database.h>
 
 #include <algorithm>
 #include <cassert>
@@ -98,7 +99,7 @@ WeldControlImpl::WeldControlImpl(
     clock_functions::SystemClockNowFunc system_clock_now_func,
     clock_functions::SteadyClockNowFunc steady_clock_now_func, prometheus::Registry* registry,
     image_logging::ImageLoggingManager* image_logging_manager,
-    slice_translator::SliceTranslatorServiceV2* slice_translator_v2)
+    slice_translator::SliceTranslatorServiceV2* slice_translator_v2, SQLite::Database* db)
     : config_(config),
       weld_sequence_config_(weld_sequence_config),
       settings_provider_(settings_provider),
@@ -113,6 +114,7 @@ WeldControlImpl::WeldControlImpl(
       slice_translator_v2_(slice_translator_v2),
       bead_control_(bead_control),
       delay_buffer_(delay_buffer),
+      confident_slice_buffer_(db),
       weld_systems_{
           {weld_system::WeldSystemId::ID1, {}},
           {weld_system::WeldSystemId::ID2, {}}
@@ -679,29 +681,25 @@ void WeldControlImpl::ChangeState(State new_state) {
 void WeldControlImpl::UpdateConfidentSlice() {
   auto const use_edge_sensor = settings_.UseEdgeSensor();
   if (cached_lpcs_.confidence == lpcs::SliceConfidence::HIGH && use_edge_sensor) {
-    if (confident_slice_buffer_ == nullptr) {
-      confident_slice_buffer_ = std::make_unique<ConfidentSliceBuffer>(
-          CalculateConfidentSliceBufferSlots(cached_weld_object_radius_), 2 * std::numbers::pi);
+    if (!confident_slice_buffer_.Available()) {
+      confident_slice_buffer_.Init(cached_weld_object_radius_, config_.storage_resolution);
     }
 
-    confident_slice_buffer_->Store(cached_weld_axis_position_,
-                                   {.edge_position = cached_edge_position_, .groove = cached_mcs_.groove.value()});
+    confident_slice_buffer_.Store(cached_weld_axis_position_,
+                                  {.edge_position = cached_edge_position_, .groove = cached_mcs_.groove.value()});
 
-    metrics_.confident_slice_buffer_fill_ratio->Set(static_cast<double>(confident_slice_buffer_->FilledSlots()) /
-                                                    static_cast<double>(confident_slice_buffer_->Slots()));
+    metrics_.confident_slice_buffer_fill_ratio->Set(static_cast<double>(confident_slice_buffer_.FilledSlots()) /
+                                                    static_cast<double>(confident_slice_buffer_.Slots()));
   }
 
-  auto const data = confident_slice_buffer_ ? confident_slice_buffer_->Get(cached_weld_axis_position_) : std::nullopt;
+  auto const data = confident_slice_buffer_.Get(cached_weld_axis_position_);
   if (!data) {
     metrics_.confident_slice.no_data->Increment();
     return;
   }
 
-  auto const fill_ratio = confident_slice_buffer_ != nullptr
-                              ? static_cast<double>(confident_slice_buffer_->FilledSlots()) /
-                                    static_cast<double>(confident_slice_buffer_->Slots())
-                              : 0.0;
-  LOG_TRACE("confident_slice_buffer filled-ratio: {:.1f}", fill_ratio);
+  auto const fill_ratio = confident_slice_buffer_.FillRatio();
+  LOG_TRACE("confident_slice_buffer filled-ratio: {:.1f}%", fill_ratio * 100);
 
   auto groove                       = data.value().second.groove;
   auto const edge_sensor_adjustment = data.value().second.edge_position - cached_edge_position_;
@@ -758,9 +756,7 @@ void WeldControlImpl::UpdateReadyForABPCap() {
     return;
   }
 
-  if (confident_slice_buffer_ == nullptr || static_cast<double>(confident_slice_buffer_->FilledSlots()) /
-                                                    static_cast<double>(confident_slice_buffer_->Slots()) <
-                                                READY_FOR_CAP_CONFIDENT_BUFFER_FILL_RATIO) {
+  if (confident_slice_buffer_.FillRatio() < READY_FOR_CAP_CONFIDENT_BUFFER_FILL_RATIO) {
     return;
   }
 
@@ -937,7 +933,7 @@ void WeldControlImpl::UpdateOutput(double bead_slice_area_ratio, double area_rat
   }
 
   LOG_TRACE(
-      "output: ws2-current: {:.1f}, weld-axis velocity(rad/sec)/velocity(cm/min)/radius(mm): {:.3f}/{:.1f}/{:.1f}",
+      "output: ws2-current: {:.1f}, weld-axis velocity(rad/sec)/velocity(cm/min)/radius(mm): {:.4f}/{:.1f}/{:.1f}",
       weld_systems_[weld_system::WeldSystemId::ID2].settings.current, weld_axis_velocity_desired_,
       common::math::MmSecToCmMin(weld_axis_velocity_desired_ * cached_weld_object_radius_), cached_weld_object_radius_);
 
@@ -990,28 +986,33 @@ void WeldControlImpl::UpdateTrackingPosition() {
           .look_ahead_distance = 0,
       };
 
-      auto const output = bead_control_->Update(input);
-      if (!output.has_value()) {
-        if (!groove_finished_) {
+      auto const [result, output] = bead_control_->Update(input);
+      switch (result) {
+        case bead_control::BeadControl::Result::OK:
+          break;
+        case bead_control::BeadControl::Result::ERROR:
           event_handler_->SendEvent(event::ABP_CALCULATION_ERROR, std::nullopt);
           observer_->OnError();
           LogData("abp-calculation-error");
-        }
-        return;
+          return;
+        case bead_control::BeadControl::Result::FINISHED:
+          LOG_INFO("Groove finished!");
+          observer_->OnGracefulStop();
+          return;
       }
 
-      UpdateOutput(output->bead_slice_area_ratio, output->groove_area_ratio);
+      UpdateOutput(output.bead_slice_area_ratio, output.groove_area_ratio);
 
-      bead_slice_area_ratio_          = output->bead_slice_area_ratio;
-      groove_area_ratio_              = output->groove_area_ratio;
-      bead_control_horizontal_offset_ = output->horizontal_offset;
+      bead_slice_area_ratio_          = output.bead_slice_area_ratio;
+      groove_area_ratio_              = output.groove_area_ratio;
+      bead_control_horizontal_offset_ = output.horizontal_offset;
 
-      tracking_input.mode              = output->tracking_mode;
-      tracking_input.reference         = output->tracking_reference;
-      tracking_input.horizontal_offset = output->horizontal_offset;
+      tracking_input.mode              = output.tracking_mode;
+      tracking_input.reference         = output.tracking_reference;
+      tracking_input.horizontal_offset = output.horizontal_offset;
 
-      if (output->horizontal_lin_velocity.has_value()) {
-        slide_horizontal_lin_velocity = output->horizontal_lin_velocity.value();
+      if (output.horizontal_lin_velocity.has_value()) {
+        slide_horizontal_lin_velocity = output.horizontal_lin_velocity.value();
       }
     }  // fallthrough
     case Mode::JOINT_TRACKING: {
@@ -1033,6 +1034,7 @@ void WeldControlImpl::UpdateTrackingPosition() {
       break;
   }
 }
+
 auto WeldControlImpl::CheckHandover() -> bool {
   auto const now = steady_clock_now_func_();
   if (handover_to_jt_timestamp_ && now > handover_to_jt_timestamp_.value() + config_.handover_grace) {
@@ -1257,12 +1259,8 @@ void WeldControlImpl::AutoBeadPlacementStart(LayerType layer_type) {
   smooth_ws2_current_.Fill(abp_parameters->WS2CurrentAvg());
 
   auto on_cap_notification = [this]() {
-    auto const fill_ratio = confident_slice_buffer_ != nullptr
-                                ? static_cast<double>(confident_slice_buffer_->FilledSlots()) /
-                                      static_cast<double>(confident_slice_buffer_->Slots())
-                                : 0.0;
-
-    LOG_INFO("CAP notification - fill-ratio: {:.2f}", fill_ratio);
+    auto const fill_ratio = confident_slice_buffer_.FillRatio();
+    LOG_INFO("CAP notification - fill-ratio: {:.1f}%", fill_ratio * 100);
 
     if (fill_ratio < READY_FOR_CAP_CONFIDENT_BUFFER_FILL_RATIO) {
       LOG_INFO("Handover to manual");
@@ -1276,11 +1274,6 @@ void WeldControlImpl::AutoBeadPlacementStart(LayerType layer_type) {
     }
   };
 
-  auto on_finished = [this]() {
-    groove_finished_ = true;
-    observer_->OnGrooveFinished();
-  };
-
   switch (mode_) {
     case Mode::JOINT_TRACKING: {
       LOG_INFO("ABP Start with parameters: {}",
@@ -1289,7 +1282,8 @@ void WeldControlImpl::AutoBeadPlacementStart(LayerType layer_type) {
       break;
     }
     case Mode::AUTOMATIC_BEAD_PLACEMENT:
-      return;
+      handover_to_abp_cap_timestamp_ = {};
+      break;
     case Mode::IDLE:
     default:
       LOG_ERROR("Not allowed in current state: {}", StateToString(state_));
@@ -1299,12 +1293,11 @@ void WeldControlImpl::AutoBeadPlacementStart(LayerType layer_type) {
   switch (layer_type) {
     case LayerType::FILL:
       bead_control_->RegisterCapNotification(config_.handover_grace + FIXED_HANDOVER_GRACE,
-                                             config_.fill_layer_groove_depth_threshold, on_cap_notification);
+                                             abp_parameters->CapInitDepth(), on_cap_notification);
       break;
     case LayerType::CAP:
       handover_to_abp_cap_timestamp_ = {};
       bead_control_->UnregisterCapNotification();
-      bead_control_->RegisterFinishedNotification(on_finished);
       bead_control_->NextLayerCap();
       break;
     case LayerType::NOT_APPLICABLE:
@@ -1340,7 +1333,6 @@ void WeldControlImpl::Stop() {
   pending_scanner_stop_    = true;
   last_weld_axis_position_ = {};
   ready_for_auto_cap_      = false;
-  groove_finished_         = false;
 
   kinematics_client_->Release();
   tracking_manager_->Reset();
@@ -1352,7 +1344,6 @@ void WeldControlImpl::Stop() {
   handover_to_abp_cap_timestamp_                                      = {};
   handover_to_manual_timestamp_                                       = {};
   bead_control_->UnregisterCapNotification();
-  bead_control_->UnregisterFinishedNotification();
 
   scanner_no_confidence_timestamp_  = {};
   scanner_low_confidence_timestamp_ = {};
@@ -1381,7 +1372,7 @@ void WeldControlImpl::SubscribeReady(
 void WeldControlImpl::ResetGrooveData() {
   bead_control_->ResetGrooveData();
   delay_buffer_->Clear();
-  confident_slice_buffer_ = nullptr;
+  confident_slice_buffer_.Clear();
 }
 
 void WeldControlImpl::AddWeldStateObserver(WeldStateObserver* observer) { weld_state_observers_.push_back(observer); }
