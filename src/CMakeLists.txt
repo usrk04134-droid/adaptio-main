@@ -50,7 +50,12 @@ target_compile_options(${TEST_IMAGES_APPLICATION} PRIVATE -Wall -Werror -pedanti
 target_link_options(${TEST_IMAGES_APPLICATION} PRIVATE -v)
 target_compile_features(${TEST_IMAGES_APPLICATION} PRIVATE cxx_std_23)
 
-add_subdirectory(benchmarks)
+# Benchmarks are optional; disable in environments without fmt
+if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/CMakeLists.txt AND TARGET fmt::fmt)
+  add_subdirectory(benchmarks)
+else()
+  message(STATUS "Skipping benchmarks: fmt not available or file missing")
+endif()
 add_subdirectory(block_tests)
 add_subdirectory(common)
 add_subdirectory(configuration)
