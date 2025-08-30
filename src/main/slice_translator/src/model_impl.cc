@@ -151,6 +151,10 @@ auto ModelImpl::CreateProjectionCircle(const common::Vector3D& rot_center,
 
   // Rotate/project to torch plane by computing intersection between ABW circle and torch plane
   double dist_to_center = (p_macs - p_circle_1).norm();  // Projection circle radius
+  if (!std::isfinite(dist_to_center)) {
+    LOG_ERROR("Non-finite projection circle radius computed; clamping to 0.0");
+    dist_to_center = 0.0;
+  }
   Circle3d projection_circle{n_circle_1, dist_to_center, circle_center};
 
 LOG_DEBUG("projection circle: r={:.6f}, center=({:.6f}, {:.6f}, {:.6f}), n=({:.6f}, {:.6f}, {:.6f}), ref={}",
@@ -181,6 +185,19 @@ auto ModelImpl::RotateToPlane(const Circle3d& projection_circle, Plane3d& target
       LOG_ERROR("Dropping invalid intersection point[{}]: ({}, {}, {}), ref={}",
                 i, x, y, z, static_cast<int>(pt.GetRefSystem()));
     }
+  }
+  if (valid_points.empty()) {
+    // Fallback: return orthogonal projection of origin onto target plane
+    Eigen::Vector3d n   = target_plane.GetNormal();
+    if (n.norm() < 1e-12 || !std::isfinite(n.norm())) {
+      n = {0.0, 1.0, 0.0};
+    } else {
+      n.normalize();
+    }
+    Eigen::Vector3d p0  = target_plane.GetPointInPlane().ToVec();
+    Eigen::Vector3d proj = p0 - n.dot(p0) * n;
+    LOG_ERROR("No valid circle-plane intersection; using plane origin projection fallback");
+    return {proj(0), proj(1), proj(2), target_plane.GetRefSystem()};
   }
   Point3d int_point = FindClosestPoint(valid_points, {0, 0, 0, CoordinateSystem::MACS});
   return int_point;

@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <cmath>
 
 #include "common/logging/application_log.h"
 #include "common/messages/scanner.h"
@@ -136,13 +137,23 @@ void ScannerClientImpl::OnSliceData(common::msg::scanner::SliceData slice_data) 
   LOG_TRACE("ScannerClientImpl received slice data, request slides position");
 
   if (started_) {
+    const double MAX_ABS_MM = 1e5;  // Defensive sanity limit against uninitialized/garbage values
+
     scanner_data_in_process_.groove = std::vector<lpcs::Point>{};
     for (auto& abws : slice_data.groove) {
-      scanner_data_in_process_.groove->push_back({abws.x, abws.y});
+      if (std::isfinite(abws.x) && std::isfinite(abws.y) &&
+          std::abs(abws.x) <= MAX_ABS_MM && std::abs(abws.y) <= MAX_ABS_MM) {
+        scanner_data_in_process_.groove->push_back({abws.x, abws.y});
+      }
     }
 
+    scanner_data_in_process_.line.clear();
+    scanner_data_in_process_.line.reserve(common::msg::scanner::LINE_ARRAY_SIZE);
     for (auto& line : slice_data.line) {
-      scanner_data_in_process_.line.push_back({line.x, line.y});
+      if (std::isfinite(line.x) && std::isfinite(line.y) &&
+          std::abs(line.x) <= MAX_ABS_MM && std::abs(line.y) <= MAX_ABS_MM) {
+        scanner_data_in_process_.line.push_back({line.x, line.y});
+      }
     }
 
     scanner_data_in_process_.time_stamp  = slice_data.time_stamp;
