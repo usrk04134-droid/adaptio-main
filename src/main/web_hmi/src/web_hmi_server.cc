@@ -35,11 +35,13 @@ using web_hmi::WebHmiServer;
 WebHmiServer::WebHmiServer(zevs::CoreSocket* in_socket, zevs::CoreSocket* out_socket,
                            joint_geometry::JointGeometryProvider* joint_geometry_provider,
                            kinematics::KinematicsClient* kinematics_client,
-                           coordination::ActivityStatus* activity_status)
+                           coordination::ActivityStatus* activity_status,
+                           calibration::CalibrationMetrics* calibration_metrics)
     : in_socket_(in_socket),
       out_socket_(out_socket),
       kinematics_client_(kinematics_client),
-      activity_status_(activity_status) {
+      activity_status_(activity_status),
+      calibration_metrics_(calibration_metrics) {
   LOG_DEBUG("Starting WebHmiServer");
   auto handler = [this](zevs::MessagePtr msg) { this->OnMessage(std::move(msg)); };
   in_socket_->SetHandler(handler);
@@ -108,6 +110,16 @@ void WebHmiServer::OnMessage(zevs::MessagePtr message) {
         out_socket_->SendWithEnvelope(ADAPTIO_IO, std::move(message));
       };
       kinematics_client_->GetEdgePosition(on_get_edge_position);
+    } else if (message_name == "LaserToTorchCalibration") {
+      // Legacy calibration message (v1). For v2 we only track the metric and set busy state.
+      if (!activity_status_->IsIdle()) {
+        LOG_ERROR("Cannot start LaserToTorchCalibration - busy with status: {}", activity_status_->ToString());
+        return;
+      }
+      if (calibration_metrics_ != nullptr) {
+        calibration_metrics_->IncrementLaserTorchCalCount();
+      }
+      activity_status_->Set(coordination::ActivityStatusE::LASER_TORCH_CALIBRATION);
     } else {
       LOG_ERROR("Unknown Message: message_name={}", message_name);
     }

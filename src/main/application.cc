@@ -113,10 +113,14 @@ auto Application::Run(const std::string& event_loop_name, const std::string& end
 
   joint_geometry_provider_ = std::make_unique<joint_geometry::JointGeometryProviderImpl>(configuration_, database_);
 
+  // Calibration metrics
+  calibration_metrics_ = std::make_unique<calibration::CalibrationMetrics>(registry_);
+
   // Service Mode
   web_hmi_server_ = std::make_unique<web_hmi::WebHmiServer>(web_hmi_in_socket_.get(), web_hmi_out_socket_.get(),
                                                             joint_geometry_provider_.get(),
-                                                            kinematics_client_.get(), activity_status_.get());
+                                                            kinematics_client_.get(), activity_status_.get(),
+                                                            calibration_metrics_.get());
 
   // Image logging manager
   auto image_logger_config = configuration_->GetImageLoggingConfiguration();
