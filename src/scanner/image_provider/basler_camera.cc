@@ -15,6 +15,7 @@
 #include <pylon/TlFactory.h>
 #include <pylon/TypeMappings.h>
 
+#include <algorithm>
 #include <boost/outcome/result.hpp>
 #include <boost/thread/thread.hpp>
 #include <chrono>
@@ -46,6 +47,10 @@ auto const GET_SCANNER_METRICS_INTERVAL = std::chrono::seconds(15);
 }  // namespace
 
 namespace scanner::image_provider {
+
+const double MAX_GAIN  = 24.0;
+const double MIN_GAIN  = 0.0;
+const double GAIN_STEP = 2.0;
 
 const char* pfsFileContent = R"(
 @PFS_FILE_CONTENT@
@@ -194,14 +199,29 @@ void BaslerCamera::AdjustGain(double factor) {
   if (!camera_) {
     return;
   }
-  camera_->StopGrabbing();
-  auto gain     = camera_->Gain.GetValue();
-  auto new_gain = gain + log10(factor) / log10(2) * 6.0;
-  if (new_gain < 0.0) {
-    new_gain = 0.0;
-  } else if (new_gain > 24.0) {
-    new_gain = 24.0;
+
+  if (factor == 0.) {
+    return;
   }
+
+  auto gain = camera_->Gain.GetValue();
+  auto step = log10(factor);
+
+  if ((step < 0. && gain == MIN_GAIN) || (step > 0. && gain == MAX_GAIN)) {
+    return;
+  }
+
+  camera_->StopGrabbing();
+
+  auto new_gain = gain;
+  if (step > 0.) {
+    new_gain += GAIN_STEP;
+  } else {
+    new_gain -= GAIN_STEP;
+  }
+
+  new_gain = std::clamp(new_gain, MIN_GAIN, MAX_GAIN);
+
   camera_->Gain.SetValue(new_gain);
   camera_->StartGrabbing(EGrabStrategy::GrabStrategy_LatestImageOnly, EGrabLoop::GrabLoop_ProvidedByInstantCamera);
   LOG_TRACE("Continuous grabbing restarted with gain {:.3f} dB * {:.3f} = {:.3f} dB", gain, factor, new_gain);

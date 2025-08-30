@@ -89,9 +89,10 @@ TEST_SUITE("BeadControl") {
 
     auto test_controller_update = [&control, &input, angle_step](int bead, int layer, tracking::TrackingMode tracking,
                                                                  bead_control::State state) {
-      auto output = control.Update(input);
+      auto [result, output] = control.Update(input);
 
-      CHECK(output->tracking_mode == tracking);
+      CHECK(result == bead_control::BeadControl::Result::OK);
+      CHECK(output.tracking_mode == tracking);
 
       input.weld_object_angle = std::fmod(input.weld_object_angle + angle_step, 2 * std::numbers::pi);
 
@@ -269,14 +270,15 @@ TEST_SUITE("BeadControl") {
       auto test_controller_update = [&control, &input, angle_step](
                                         int bead, int layer, tracking::TrackingMode tracking, bead_control::State state,
                                         std::optional<double> bead_pos, double bead_slice_area_ratio) {
-        auto output = control.Update(input);
-        auto status = control.GetStatus();
+        auto [result, output] = control.Update(input);
+        auto status           = control.GetStatus();
 
-        CHECK(output->tracking_mode == tracking);
+        CHECK(result == bead_control::BeadControl::Result::OK);
+        CHECK(output.tracking_mode == tracking);
         if (bead_pos) {
-          REQUIRE(output->horizontal_offset == doctest::Approx(bead_pos.value()).epsilon(0.05));
+          REQUIRE(output.horizontal_offset == doctest::Approx(bead_pos.value()).epsilon(0.05));
         }
-        REQUIRE(output->bead_slice_area_ratio == doctest::Approx(bead_slice_area_ratio).epsilon(0.001));
+        REQUIRE(output.bead_slice_area_ratio == doctest::Approx(bead_slice_area_ratio).epsilon(0.001));
 
         input.weld_object_angle = std::fmod(input.weld_object_angle + angle_step, 2 * std::numbers::pi);
 
@@ -408,10 +410,6 @@ TEST_SUITE("BeadControl") {
       control.SetCapCornerOffset(test.cap_corner_offset);
       control.NextLayerCap();
 
-      auto finished    = false;
-      auto on_finished = [&finished]() { finished = true; };
-      control.RegisterFinishedNotification(on_finished);
-
       auto weld_object_lin_velocity          = 1000. / 60.;  // mm/sec
       auto weld_object_radius                = 1500.;
       bead_control::BeadControl::Input input = {
@@ -430,15 +428,16 @@ TEST_SUITE("BeadControl") {
 
       auto test_controller_update = [&control, &input, angle_step](int bead, bead_control::State state,
                                                                    std::optional<double> bead_pos) {
-        auto output = control.Update(input);
-        auto status = control.GetStatus();
+        auto [result, output] = control.Update(input);
+        auto status           = control.GetStatus();
 
-        CHECK(output->tracking_mode == tracking::TrackingMode::TRACKING_CENTER_HEIGHT);
+        CHECK(result == bead_control::BeadControl::Result::OK);
+        CHECK(output.tracking_mode == tracking::TrackingMode::TRACKING_CENTER_HEIGHT);
         if (bead_pos) {
-          REQUIRE(output->horizontal_offset == doctest::Approx(bead_pos.value()).epsilon(0.05));
+          REQUIRE(output.horizontal_offset == doctest::Approx(bead_pos.value()).epsilon(0.05));
         }
-        REQUIRE(output->bead_slice_area_ratio == doctest::Approx(1.0).epsilon(0.001));
-        REQUIRE(output->groove_area_ratio == doctest::Approx(1.0).epsilon(0.001));
+        REQUIRE(output.bead_slice_area_ratio == doctest::Approx(1.0).epsilon(0.001));
+        REQUIRE(output.groove_area_ratio == doctest::Approx(1.0).epsilon(0.001));
 
         input.weld_object_angle = std::fmod(input.weld_object_angle + angle_step, 2 * std::numbers::pi);
 
@@ -463,9 +462,9 @@ TEST_SUITE("BeadControl") {
         test_controller_update(bead, bead_control::State::OVERLAPPING, pos);
       }
 
-      /* send one additional input to trigger new bead and on_finished callback */
-      control.Update(input);
-      CHECK(finished);
+      /* send one additional input to trigger new bead and FINISHED groove */
+      auto [result, output] = control.Update(input);
+      CHECK(result == bead_control::BeadControl::Result::FINISHED);
     }
   }
 }

@@ -178,20 +178,21 @@ auto BeadControlImpl::OnFillLayerSecondBead() -> bool {
   return true;
 }
 
-auto BeadControlImpl::OnNewBead() -> bool {
-  auto ok = true;
+auto BeadControlImpl::OnNewBead() -> Result {
+  auto result = Result::OK;
 
   auto new_layer = bead_number_ == 0 || bead_number_ == total_beads_in_full_layer_.value_or(0);
 
   switch (layer_type_) {
     case LayerType::FILL:
       if (bead_number_ == 1) {
-        ok = OnFillLayerFirstBead();
+        result = OnFillLayerFirstBead() ? Result::OK : Result::ERROR;
       } else if (bead_number_ == 2) {
-        ok        = OnFillLayerSecondBead();
+        result    = OnFillLayerSecondBead() ? Result::OK : Result::ERROR;
         new_layer = bead_number_ == total_beads_in_full_layer_.value_or(0);
       }
-      if (ok && new_layer) {
+
+      if (result == Result::OK && new_layer) {
         bead_number_                    = 0;
         layer_type_                     = next_layer_type_;
         total_beads_in_prev_full_layer_ = layer_type_ == LayerType::FILL ? total_beads_in_full_layer_ : std::nullopt;
@@ -199,26 +200,24 @@ auto BeadControlImpl::OnNewBead() -> bool {
         ++layer_number_;
       }
       break;
+
     case LayerType::CAP: {
       auto const new_layer = bead_number_ == 0 || (total_beads_in_full_layer_.has_value() &&
                                                    bead_number_ == total_beads_in_full_layer_.value());
       if (new_layer) {
         LOG_INFO("CAP finished!");
-        if (on_finished_) {
-          on_finished_();
-        }
-        ok = false;
+        result = Result::FINISHED;
       }
       break;
     }
   }
 
-  if (ok) {
+  if (result == Result::OK) {
     ++bead_number_;
     LOG_INFO("New bead: layer: {} bead: {} type: {}", layer_number_, bead_number_, LayerTypeToString(layer_type_));
   }
 
-  return ok;
+  return result;
 }
 
 auto GetRepositionHorizontalVelocity(double angular_velocity, double radius, double angle) -> double {
@@ -374,7 +373,7 @@ void BeadControlImpl::UpdateGrooveLocking(const Input& input) {
   }
 }
 
-auto BeadControlImpl::Update(const Input& input) -> std::optional<Output> {
+auto BeadControlImpl::Update(const Input& input) -> std::pair<Result, Output> {
   weld_system1_wire_diameter_ = input.weld_system1.wire_diameter;
   weld_system2_wire_diameter_ = input.weld_system2.wire_diameter;
   weld_system1_twin_wire_     = input.weld_system1.twin_wire;
@@ -392,9 +391,14 @@ auto BeadControlImpl::Update(const Input& input) -> std::optional<Output> {
 
   storage_->Store(input.weld_object_angle, data);
 
-  auto const ok = BeadOperationUpdate(input.weld_object_angle, input.weld_object_ang_velocity, input.steady_satisfied);
-  if (!ok) {
-    return std::nullopt;
+  auto const result =
+      BeadOperationUpdate(input.weld_object_angle, input.weld_object_ang_velocity, input.steady_satisfied);
+  switch (result) {
+    case Result::OK:
+      break;
+    case Result::ERROR:
+    case Result::FINISHED:
+      return {result, {}};
   }
 
   if (layer_type_ == LayerType::FILL) {
@@ -437,7 +441,7 @@ auto BeadControlImpl::Update(const Input& input) -> std::optional<Output> {
         GetRepositionHorizontalVelocity(input.weld_object_ang_velocity, input.weld_object_radius, bead_switch_angle_);
   }
 
-  return output;
+  return {Result::OK, output};
 }
 
 auto BeadControlImpl::GetStatus() const -> Status {
@@ -460,16 +464,16 @@ void BeadControlImpl::Reset() {
 }
 
 auto BeadControlImpl::BeadOperationUpdate(double angular_position, double angular_velocity, bool steady_satisfied)
-    -> bool {
-  auto start_repositioning = [this]() -> bool {
-    auto const ok = OnNewBead();
-    if (ok) {
+    -> Result {
+  auto start_repositioning = [this]() -> Result {
+    auto const result = OnNewBead();
+    if (result == Result::OK) {
       LOG_DEBUG("Start Repositioning");
       progress_ = 0.; /* reposition state will not update progress */
       state_    = State::REPOSITIONING;
     }
 
-    return ok;
+    return result;
   };
 
   auto update_angular_position = [this](double position, double distance) -> bool {
@@ -498,13 +502,13 @@ auto BeadControlImpl::BeadOperationUpdate(double angular_position, double angula
 
   if (state_ != State::IDLE && !steady_satisfied) {
     /* do not advance past the initial repositioning until steady condition is satisfied */
-    return true;
+    return Result::OK;
   }
 
-  auto ok = true;
+  auto result = Result::OK;
   switch (state_) {
     case State::IDLE:
-      ok = start_repositioning();
+      result = start_repositioning();
       break;
     case State::STEADY:
       if (update_angular_position(angular_position, 2 * std::numbers::pi)) {
@@ -536,7 +540,7 @@ auto BeadControlImpl::BeadOperationUpdate(double angular_position, double angula
     case State::OVERLAPPING:
       if (update_angular_position(angular_position, BeadCalc::Distance2Angle(weld_object_radius_, bead_overlap_))) {
         /* Overlap finished -> start repositioning */
-        ok = start_repositioning();
+        result = start_repositioning();
       }
       break;
     default:
@@ -545,7 +549,7 @@ auto BeadControlImpl::BeadOperationUpdate(double angular_position, double angula
 
   last_angular_position_ = angular_position;
 
-  return ok;
+  return result;
 }
 
 void BeadControlImpl::ResetGrooveData() {
@@ -579,10 +583,6 @@ void BeadControlImpl::UnregisterCapNotification() {
   cap_notification_.last_layer_depth = 0;
   cap_notification_.on_notification  = nullptr;
 }
-
-void BeadControlImpl::RegisterFinishedNotification(OnFinishedNotification on_finished) { on_finished_ = on_finished; }
-
-void BeadControlImpl::UnregisterFinishedNotification() { on_finished_ = nullptr; }
 
 void BeadControlImpl::NextLayerCap() { next_layer_type_ = LayerType::CAP; }
 

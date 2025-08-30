@@ -16,8 +16,7 @@ class WeldControlObserver {
   virtual void OnNotifyHandoverToManual() = 0;
   virtual void OnGrooveDataTimeout()      = 0;
   virtual void OnError()                  = 0;
-  virtual void OnReadyForCap()            = 0;
-  virtual void OnGrooveFinished()         = 0;
+  virtual void OnGracefulStop()           = 0;
 };
 
 class WeldControl {

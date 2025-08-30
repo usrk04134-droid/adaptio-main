@@ -85,7 +85,7 @@ inline auto MatrixToString(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dy
 
 inline auto ToYaml(const ScannerCalibrationData& data) -> std::string {
   return "\nscanner_serial_number: " + data.scanner_serial_number + "\n" + "intrinsic:\n" +
-         "  projection_center_distance: " + fmt::to_string(data.intrinsic.projection_center_distance) + "\n" +
+         "  projection_center_distance: " + fmt::format("{:1.f}", data.intrinsic.projection_center_distance) + "\n" +
          "  focus_distance: " + fmt::to_string(data.intrinsic.focus_distance) + "\n" + "  principal_point: \n" +
          "    x: " + fmt::to_string(data.intrinsic.principal_point.x) + "\n" +
          "    y: " + fmt::to_string(data.intrinsic.principal_point.y) + "\n" + "  pixel_pitch: \n" +

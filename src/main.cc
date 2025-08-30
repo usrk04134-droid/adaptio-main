@@ -30,7 +30,7 @@
 #include "application.h"
 #include "common/logging/application_log.h"
 #include "common/zevs/zevs_core.h"
-#include "configuration/config_manager.h"
+#include "configuration/config_manager_impl.h"
 #include "controller/controller_factory.h"
 #include "controller/controller_messenger.h"
 #include "scanner/image_provider/image_provider_configuration.h"
@@ -39,8 +39,6 @@
 #include "version.h"
 
 namespace po = boost::program_options;
-
-using configuration::ConfigManager;
 
 std::string const PATH_DATA_DIR                      = "/var/lib/adaptio";
 std::string const PATH_LOGS_DIR                      = "/var/log/adaptio";
@@ -270,7 +268,7 @@ auto main(int argc, char* argv[]) -> int {
         return "";
       },
       PATH_SCANNER_CALIBRATION);
-  auto configuration = std::make_unique<ConfigManager>(path_scanner_calibration);
+  auto configuration = std::make_unique<configuration::ConfigManagerImpl>(path_scanner_calibration);
 
   auto config_res = configuration->Init(default_config, cmd_line_config, path_data);
 

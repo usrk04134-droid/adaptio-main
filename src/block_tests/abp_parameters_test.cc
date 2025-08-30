@@ -83,6 +83,7 @@ auto AbpParametersPayload(const TestParams& params) -> auto {
 TEST_SUITE("ABPParameters") {
   TEST_CASE("abp_store_update_get") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     /* Store ABP parameters successfully */
     auto const payload1 = AbpParametersPayload(TestParams{});
@@ -149,6 +150,7 @@ TEST_SUITE("ABPParameters") {
 
   TEST_CASE("invalid_input") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     auto const tests = {
         TestParams{.wall_offset = 0.},

@@ -1,24 +1,75 @@
 #pragma once
 
-#include "common/containers/slot_buffer.h"
+#include <SQLiteCpp/SQLiteCpp.h>
+
+#include <memory>
+#include <nlohmann/json.hpp>
+#include <numbers>
+
+#include "common/logging/application_log.h"
+#include "common/storage/slot_buffer_storage.h"
 #include "macs/macs_groove.h"
+
+namespace {}  // namespace
 
 namespace weld_control {
 
 struct ConfidentSliceData {
   double edge_position;
   macs::Groove groove;
+
+  auto ToJson() const -> nlohmann::json {
+    return nlohmann::json{
+        {{"edge_position", edge_position}, {"groove", groove.ToJson()}}
+    };
+  }
+
+  static auto FromJson(const nlohmann::json& json_obj) -> std::optional<ConfidentSliceData> {
+    try {
+      auto groove_opt = macs::Groove::FromJson(json_obj.at("groove"));
+      if (!groove_opt.has_value()) {
+        return std::nullopt;
+      }
+
+      return ConfidentSliceData{.edge_position = json_obj.at("edge_position").get<double>(),
+                                .groove        = groove_opt.value()};
+    } catch (const nlohmann::json::exception& e) {
+      LOG_ERROR("Failed to parse ConfidentSliceData from JSON: {}", e.what());
+      return std::nullopt;
+    }
+  }
 };
 
-/* 500mm  radius ->  3141 / 5.0 =  628 slots */
-/* 5000mm radius -> 31415 / 5.0 = 6282 slots */
-auto const CONFIDENT_SLICE_RESOLUTION = 5.0; /* in mm */
+class ConfidentSliceBuffer {
+ public:
+  explicit ConfidentSliceBuffer(SQLite::Database* db)
+      : storage_(std::make_unique<common::storage::SlotBufferStorage<ConfidentSliceData>>(db, "confident_slice")) {}
 
-auto inline CalculateConfidentSliceBufferSlots(double radius) -> size_t {
-  /* calculate the circumference and divide with desired resolution */
-  return static_cast<size_t>(2.0 * std::numbers::pi * radius / CONFIDENT_SLICE_RESOLUTION);
+  auto Init(double radius, double resolution) -> void {
+    auto const slots = static_cast<size_t>(2 * std::numbers::pi * radius / resolution);
+    storage_->Init(slots, 2 * std::numbers::pi);
+  }
+
+  auto Store(double pos, ConfidentSliceData const& value) -> void { storage_->Store(pos, value); }
+
+  auto Get(double pos) const -> std::optional<std::pair<double, ConfidentSliceData>> { return storage_->Get(pos); }
+
+  auto Clear() -> void { storage_->Clear(); }
+
+  auto Empty() const -> bool { return storage_->Empty(); }
+
+  auto Filled() const -> bool { return storage_->Filled(); }
+
+  auto FilledSlots() const -> size_t { return storage_->FilledSlots(); }
+
+  auto Slots() const -> size_t { return storage_->Slots(); }
+
+  auto FillRatio() const -> double { return storage_->FillRatio(); }
+
+  auto Available() const -> bool { return storage_->Available(); }
+
+ private:
+  std::unique_ptr<common::storage::SlotBufferStorage<ConfidentSliceData>> storage_;
 };
-
-using ConfidentSliceBuffer = common::containers::SlotBuffer<ConfidentSliceData>;
 
 }  // namespace weld_control

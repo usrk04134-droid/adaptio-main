@@ -19,7 +19,6 @@ namespace web_hmi {
 class WebHmiServer : public slice_translator::SliceObserver, public WebHmi {
  public:
   WebHmiServer(zevs::CoreSocket* in_socket, zevs::CoreSocket* out_socket,
-               calibration::CalibrationManager* calibration_manager,
                joint_geometry::JointGeometryProvider* joint_geometry_provider,
                kinematics::KinematicsClient* kinematics_client, coordination::ActivityStatus* activity_status);
 
@@ -40,7 +39,6 @@ class WebHmiServer : public slice_translator::SliceObserver, public WebHmi {
 
   zevs::CoreSocket* in_socket_;
   zevs::CoreSocket* out_socket_;
-  std::unique_ptr<WebHmiCalibration> calibration_;
   kinematics::KinematicsClient* kinematics_client_;
   coordination::ActivityStatus* activity_status_;
 

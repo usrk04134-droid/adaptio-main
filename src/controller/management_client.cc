@@ -35,7 +35,7 @@ ManagementClient::ManagementClient(zevs::Socket* socket, ManagementClientObserve
   socket_->Serve(&ManagementClient::OnOnNotifyHandoverToManual, this);
   socket_->Serve(&ManagementClient::OnTrackingStoppedGrooveDataTimeout, this);
   socket_->Serve(&ManagementClient::OnScannerError, this);
-  socket_->Serve(&ManagementClient::OnReadyForCap, this);
+  socket_->Serve(&ManagementClient::OnGracefulStop, this);
 }
 
 void ManagementClient::SendTrackingStart() {
@@ -114,13 +114,15 @@ void ManagementClient::OnTrackingStoppedGrooveDataTimeout(
   state_ = InterfaceState::ERROR;
 }
 
-void ManagementClient::OnReadyForCap(common::msg::management::ReadyForCap /*data*/) {
-  LOG_TRACE("Ready for cap");
-  ready_for_cap_ = true;
-}
-
 void ManagementClient::OnScannerError(common::msg::management::ScannerError /*data*/) {
   LOG_TRACE("Joint tracking stopped - scanner error");
+  state_ = InterfaceState::ERROR;
+}
+
+void ManagementClient::OnGracefulStop(common::msg::management::GracefulStop /*data*/) {
+  LOG_TRACE("Groove Finished");
+  /* there is no graceful stop in the adaptio->PLC interface so we trigger an error to make PLC stop the weld
+   * procedure*/
   state_ = InterfaceState::ERROR;
 }
 
@@ -140,7 +142,6 @@ void ManagementClient::Update() {
 
       track_output.set_status_active(false);
       track_output.set_status_error(false);
-      ready_for_cap_ = false;
       break;
     case InterfaceState::TRACKING:
       output.set_status_ready(false);
@@ -150,7 +151,6 @@ void ManagementClient::Update() {
 
       track_output.set_status_active(true);
       track_output.set_status_error(false);
-      ready_for_cap_ = false;
       break;
     case InterfaceState::ABP:
       output.set_status_ready(false);
@@ -178,7 +178,6 @@ void ManagementClient::Update() {
 
       track_output.set_status_active(true);
       track_output.set_status_error(true);
-      ready_for_cap_ = false;
       break;
   }
 
@@ -216,7 +215,6 @@ void ManagementClient::Update() {
       break;
   }
 
-  output.set_status_ready_for_cap(ready_for_cap_);
   track_output.set_status_shallow(handover_to_manual_);
 
   observer_->AdaptioOutputUpdate(output);

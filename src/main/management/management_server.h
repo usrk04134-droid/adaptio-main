@@ -37,7 +37,7 @@ inline auto ToString(ReadyState state) -> std::string {
 class ManagementServer : public weld_control::WeldControlObserver {
  public:
   ManagementServer(zevs::Socket* socket, joint_geometry::JointGeometryProvider* joint_geometry_provider,
-                   coordination::ActivityStatus* activity_status, coordination::CalibrationStatus* calibration_status,
+                   coordination::ActivityStatus* activity_status,
                    coordination::CalibrationStatus* calibration_status_v2, weld_control::WeldControl* weld_control,
                    std::function<void()> shutdown_handler);
 
@@ -45,8 +45,7 @@ class ManagementServer : public weld_control::WeldControlObserver {
   void OnNotifyHandoverToManual() override;
   void OnGrooveDataTimeout() override;
   void OnError() override;
-  void OnReadyForCap() override;
-  void OnGrooveFinished() override;
+  void OnGracefulStop() override;
 
  private:
   void StopActiveFunction();
@@ -67,7 +66,6 @@ class ManagementServer : public weld_control::WeldControlObserver {
   zevs::Socket* socket_;
   joint_geometry::JointGeometryProvider* joint_geometry_provider_;
   coordination::ActivityStatus* activity_status_;
-  coordination::CalibrationStatus* calibration_status_;
   coordination::CalibrationStatus* calibration_status_v2_;
   weld_control::WeldControl* weld_control_;
   std::function<void()> shutdown_handler_;

@@ -76,7 +76,6 @@ class ManagementClient {
   static auto ReadyStateToString(ReadyState) -> std::string;
 
   bool handover_to_manual_ = false;
-  bool ready_for_cap_      = false;
   bool ready_for_auto_cap_ = false;
   TrackingControlData track_input_data_;
 
@@ -86,7 +85,7 @@ class ManagementClient {
   void OnOnNotifyHandoverToManual(common::msg::management::NotifyHandoverToManual);
   void OnTrackingStoppedGrooveDataTimeout(common::msg::management::TrackingStoppedGrooveDataTimeout);
   void OnScannerError(common::msg::management::ScannerError);
-  void OnReadyForCap(common::msg::management::ReadyForCap);
+  void OnGracefulStop(common::msg::management::GracefulStop);
 
   void SendTrackingStart();
   void SendTrackingUpdate();

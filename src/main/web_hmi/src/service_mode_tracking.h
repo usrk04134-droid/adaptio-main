@@ -20,8 +20,7 @@ class ServiceModeTracking : public Service, public weld_control::WeldControlObse
   void OnNotifyHandoverToManual() override;
   void OnGrooveDataTimeout() override;
   void OnError() override;
-  void OnReadyForCap() override;
-  void OnGrooveFinished() override;
+  void OnGracefulStop() override;
 
  private:
   weld_control::WeldControl* weld_control_;

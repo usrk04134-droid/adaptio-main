@@ -6,13 +6,13 @@
 #include <memory>
 #include <optional>
 
-#include "block_tests/helpers_calibration.h"
 #include "common/messages/kinematics.h"
 #include "common/messages/management.h"
 #include "common/messages/scanner.h"
 #include "common/messages/weld_system.h"
 #include "helpers.h"
 #include "helpers_calibration_v2.h"
+#include "helpers_joint_geometry.h"
 #include "helpers_kinematics.h"
 #include "helpers_simulator.h"
 #include "helpers_weld_system.h"
@@ -31,7 +31,7 @@ namespace help_sim = helpers_simulator;
 
 namespace {
 
-const int NUMBER_OF_STEPS_PER_REV{800};
+const int SIM_3D_OBJECT_SLICES_PER_REV{800};
 
 const double WELD_OBJECT_DIAMETER_M   = 2.0;
 const double STICKOUT_M               = 25e-3;
@@ -113,13 +113,14 @@ void JointTracking(TestFixture& fixture, depsim::ISimulator& simulator) {
 TEST_SUITE("CalibrationV2") {
   TEST_CASE("basic_calibration_v2") {
     TestFixture fixture;
+    fixture.StartApplication();
     // Set up to use timer wrapper
     fixture.SetupTimerWrapper();
 
     // Create simulator
     auto simulator  = depsim::CreateSimulator();
     auto sim_config = simulator->CreateSimConfig();
-    help_sim::SetSimulatorDefault(sim_config, NUMBER_OF_STEPS_PER_REV);
+    help_sim::SetSimulatorDefault(sim_config, SIM_3D_OBJECT_SLICES_PER_REV);
 
     // Set up joint geometry
     help_sim::SetJointGeometry(fixture, sim_config, help_sim::TEST_JOINT_GEOMETRY_WIDE);
@@ -147,6 +148,7 @@ TEST_SUITE("CalibrationV2") {
 
   TEST_CASE("cal_v2_get_ltc_before_set") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     LaserTorchCalGet(fixture);
     CHECK_EQ(LaserTorchCalGetRsp(fixture), FAILURE_PAYLOAD);
@@ -154,6 +156,7 @@ TEST_SUITE("CalibrationV2") {
 
   TEST_CASE("cal_v2_set_get_ltc") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     LaserTorchCalSet(fixture, LASER_TORCH_CONFIG);
 
@@ -163,6 +166,7 @@ TEST_SUITE("CalibrationV2") {
 
   TEST_CASE("cal_v2_set_cal_result_before_ltc") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     WeldObjectCalSet(fixture, CAL_RESULT);
     CHECK_EQ(WeldObjectCalSetRsp(fixture), FAILURE_PAYLOAD);
@@ -170,6 +174,7 @@ TEST_SUITE("CalibrationV2") {
 
   TEST_CASE("cal_v2_misc_cal_result") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     LaserTorchCalSet(fixture, LASER_TORCH_CONFIG);
     CHECK_EQ(LaserTorchCalSetRsp(fixture), SUCCESS_PAYLOAD);
@@ -190,6 +195,7 @@ TEST_SUITE("CalibrationV2") {
 
   TEST_CASE("cal_v2_start_stop") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     auto const payload = nlohmann::json({
         {"upper_joint_width_mm",        help_sim::TEST_JOINT_GEOMETRY_WIDE.upper_joint_width_mm       },
@@ -199,7 +205,8 @@ TEST_SUITE("CalibrationV2") {
         {"left_max_surface_angle_rad",  help_sim::TEST_JOINT_GEOMETRY_WIDE.left_max_surface_angle_rad },
         {"right_max_surface_angle_rad", help_sim::TEST_JOINT_GEOMETRY_WIDE.right_max_surface_angle_rad},
     });
-    SetJointGeometry(fixture, payload);
+
+    StoreJointGeometryParams(fixture, payload, true);
 
     LaserTorchCalSet(fixture, LASER_TORCH_CONFIG);
     CHECK_EQ(LaserTorchCalSetRsp(fixture), SUCCESS_PAYLOAD);

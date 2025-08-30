@@ -26,7 +26,7 @@ enum class LayerType {
 class BeadControlImpl : public BeadControl {
  public:
   explicit BeadControlImpl(WeldPositionDataStorage* storage, clock_functions::SteadyClockNowFunc steady_clock_now_func);
-  auto Update(const Input& input) -> std::optional<Output> override;
+  auto Update(const Input& input) -> std::pair<Result, Output> override;
   auto GetStatus() const -> Status override;
   void Reset() override;
 
@@ -46,8 +46,6 @@ class BeadControlImpl : public BeadControl {
   void RegisterCapNotification(std::chrono::seconds notification_grace, double last_layer_depth,
                                OnCapNotification on_notification) override;
   void UnregisterCapNotification() override;
-  void RegisterFinishedNotification(OnFinishedNotification on_finished) override;
-  void UnregisterFinishedNotification() override;
   void NextLayerCap() override;
 
  private:
@@ -94,16 +92,15 @@ class BeadControlImpl : public BeadControl {
     double last_layer_depth;
     OnCapNotification on_notification;
   } cap_notification_;
-  OnFinishedNotification on_finished_;
 
   auto CalculateBeadsInLayer(double right_bead_area) -> std::tuple<std::optional<int>, double>;
   auto OnFillLayerFirstBead() -> bool;
   auto OnFillLayerSecondBead() -> bool;
-  auto OnNewBead() -> bool;
+  auto OnNewBead() -> Result;
   auto CalculateBeadPosition(const macs::Groove& groove, const std::optional<macs::Groove>& maybe_empty_groove)
       -> std::tuple<double, tracking::TrackingMode, tracking::TrackingReference>;
   auto CalculateBeadSliceAreaRatio(const macs::Groove& maybe_empty_groove) -> double;
-  auto BeadOperationUpdate(double angular_position, double angular_velocity, bool steady_satisfied) -> bool;
+  auto BeadOperationUpdate(double angular_position, double angular_velocity, bool steady_satisfied) -> Result;
   void UpdateGrooveLocking(const Input& input);
 };
 

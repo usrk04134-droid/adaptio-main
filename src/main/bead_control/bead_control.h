@@ -37,6 +37,12 @@ class BeadControl {
     double look_ahead_distance{};
   };
 
+  enum class Result {
+    OK,
+    ERROR,
+    FINISHED,
+  };
+
   struct Output {
     double horizontal_offset{0.};
     tracking::TrackingMode tracking_mode{tracking::TrackingMode::TRACKING_LEFT_HEIGHT};
@@ -78,9 +84,9 @@ class BeadControl {
     State state{State::IDLE};
   };
 
-  virtual auto Update(const Input& data) -> std::optional<Output> = 0;
-  virtual auto GetStatus() const -> Status                        = 0;
-  virtual void Reset()                                            = 0;
+  virtual auto Update(const Input& data) -> std::pair<Result, Output> = 0;
+  virtual auto GetStatus() const -> Status                            = 0;
+  virtual void Reset()                                                = 0;
 
   virtual void SetWallOffset(double wall_offset)    = 0;
   virtual void SetBeadSwitchAngle(double angle)     = 0;
@@ -98,14 +104,10 @@ class BeadControl {
   virtual void ResetGrooveData()                                                      = 0;
   virtual auto GetEmptyGroove(double pos) -> std::optional<macs::Groove>              = 0;
 
-  using OnCapNotification                                                       = std::function<void()>;
+  using OnCapNotification                                                 = std::function<void()>;
   virtual void RegisterCapNotification(std::chrono::seconds notification_grace, double last_layer_depth,
-                                       OnCapNotification on_notification)       = 0;
-  virtual void UnregisterCapNotification()                                      = 0;
-  using OnFinishedNotification                                                  = std::function<void()>;
-  virtual void RegisterFinishedNotification(OnFinishedNotification on_finished) = 0;
-  virtual void UnregisterFinishedNotification()                                 = 0;
-
-  virtual void NextLayerCap() = 0;
+                                       OnCapNotification on_notification) = 0;
+  virtual void UnregisterCapNotification()                                = 0;
+  virtual void NextLayerCap()                                             = 0;
 };
 }  // namespace bead_control

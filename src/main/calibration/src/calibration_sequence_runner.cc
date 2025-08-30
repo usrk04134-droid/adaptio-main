@@ -79,6 +79,10 @@ void CalibrationSequenceRunner::MoveToCurrentPoint() {
 }
 
 void CalibrationSequenceRunner::OnScannerDataUpdate(const lpcs::Slice& data, const macs::Point& axis_position) {
+  if (data.confidence == lpcs::SliceConfidence::NO || !data.groove) {
+    return;
+  }
+
   if (!busy_ || current_index_ >= grid_points_.size()) {
     return;
   }
@@ -93,7 +97,8 @@ void CalibrationSequenceRunner::OnScannerDataUpdate(const lpcs::Slice& data, con
     StartStabilizationTimer();
 
   } else if (state_ == State::STABLE) {
-    RecordObservation(data, axis_position);
+    const auto observation = Observation{.slide_position = axis_position, .abw_points_lpcs = data.groove.value()};
+    RecordObservation(observation);
   }
 }
 
@@ -109,20 +114,14 @@ void CalibrationSequenceRunner::OnStabilizationComplete() {
   stabilization_task_id_ = {};
 }
 
-void CalibrationSequenceRunner::RecordObservation(const lpcs::Slice& data, const macs::Point& axis_position) {
-  if (!data.groove) {
-    LOG_ERROR("No groove data");
-    CancelTimers();
-    on_failure_();
-    return;
-  }
-
+void CalibrationSequenceRunner::RecordObservation(const Observation& observation) {
   if (!skip_next_observation_) {
-    LOG_INFO("Recording observation at h: {:.2f}, v: {:.2f}", axis_position.horizontal, axis_position.vertical);
-    observations_.push_back(Observation{.slide_position = axis_position, .abw_points_lpcs = data.groove.value()});
+    LOG_INFO("Recording observation at h: {:.2f}, v: {:.2f}", observation.slide_position.horizontal,
+             observation.slide_position.vertical);
+    observations_.push_back(observation);
   } else {
     LOG_INFO("Not recording observation, this point is for safe movement: h: {:.2f}, v: {:.2f}",
-             axis_position.horizontal, axis_position.vertical);
+             observation.slide_position.horizontal, observation.slide_position.vertical);
     skip_next_observation_ = false;
   }
 

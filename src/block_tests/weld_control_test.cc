@@ -35,6 +35,7 @@ const float VERTICAL_OFFSET   = 20.0;
 TEST_SUITE("WeldControl") {
   TEST_CASE("weld_control_status") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     StoreDefaultJointGeometryParams(fixture);
 
@@ -54,6 +55,7 @@ TEST_SUITE("WeldControl") {
 
   TEST_CASE("input") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     StoreSettings(fixture, TestSettings{.use_edge_sensor = false}, true);
     StoreDefaultJointGeometryParams(fixture);
@@ -131,6 +133,7 @@ TEST_SUITE("WeldControl") {
 
   TEST_CASE("input_no_edge_sensor") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     StoreDefaultJointGeometryParams(fixture);
     StoreSettings(fixture, TestSettings{.use_edge_sensor = false}, true);
@@ -192,6 +195,7 @@ TEST_SUITE("WeldControl") {
 
   TEST_CASE("start_abp") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     StoreDefaultJointGeometryParams(fixture);
 
@@ -219,6 +223,7 @@ TEST_SUITE("WeldControl") {
 
   TEST_CASE("input_validation") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     StoreDefaultJointGeometryParams(fixture);
 
@@ -365,6 +370,7 @@ TEST_SUITE("WeldControl") {
 
   TEST_CASE("arcing_lost_supervision") {
     TestFixture fixture;
+    fixture.StartApplication();
     CheckEvents(fixture, {});
 
     StoreDefaultJointGeometryParams(fixture);
@@ -493,6 +499,7 @@ TEST_SUITE("WeldControl") {
 
   TEST_CASE("management_start_stop_abp") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     StoreDefaultJointGeometryParams(fixture);
 
@@ -521,6 +528,7 @@ TEST_SUITE("WeldControl") {
 
   TEST_CASE("edge_sensor_not_available_when_in_idle") {
     TestFixture fixture;
+    fixture.StartApplication();
     CheckEvents(fixture, {});
 
     StoreDefaultJointGeometryParams(fixture);
@@ -545,6 +553,7 @@ TEST_SUITE("WeldControl") {
 
   TEST_CASE("ConfidenceLevels") {
     TestFixture fixture;
+    fixture.StartApplication();
     CheckEvents(fixture, {});
 
     StoreDefaultJointGeometryParams(fixture);

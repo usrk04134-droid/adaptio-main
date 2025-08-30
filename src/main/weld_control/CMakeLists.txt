@@ -20,6 +20,7 @@ target_sources(${ADAPTIO_APPLICATION}
     src/weld_metrics.h
     src/settings.h
     src/settings_provider.h
+    src/confident_slice_buffer.h
 
     src/weld_control_impl.cc
     src/weld_data_set.cc

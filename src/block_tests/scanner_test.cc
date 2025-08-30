@@ -20,6 +20,7 @@ const float VERTICAL_OFFSET   = 20.0;
 TEST_SUITE("scanner_test") {
   TEST_CASE("scanner_error") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     /* check that there are no events */
     CheckEvents(fixture, {});

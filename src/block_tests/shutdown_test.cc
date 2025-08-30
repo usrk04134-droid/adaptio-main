@@ -9,6 +9,7 @@
 TEST_SUITE("Shutdown") {
   TEST_CASE("basic") {
     TestFixture fixture;
+    fixture.StartApplication();
 
     // Shutdown
     fixture.Management()->Dispatch(common::msg::management::Shutdown{});

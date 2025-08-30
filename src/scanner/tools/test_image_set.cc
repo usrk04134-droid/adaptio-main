@@ -286,7 +286,7 @@ auto main(int argc, char* argv[]) -> int {
       .offset_distance             = 3.0,
   };
 
-  JointModelPtr joint_model = JointModelPtr(new BigSnake(properties, {48, 24, 48}, std::move(camera_model)));
+  JointModelPtr joint_model = JointModelPtr(new BigSnake(properties, {48, 16, 48}, std::move(camera_model)));
 
   ScannerOutputCBImpl scanner_output_cb;
 

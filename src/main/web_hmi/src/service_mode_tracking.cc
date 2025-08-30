@@ -49,8 +49,7 @@ void ServiceModeTracking::OnGrooveDataTimeout() {
 }
 
 void ServiceModeTracking::OnError() { LOG_DEBUG("OnError"); }
-void ServiceModeTracking::OnReadyForCap() { LOG_DEBUG("OnReadyForCap"); }
-void ServiceModeTracking::OnGrooveFinished() { LOG_DEBUG("OnGrooveFinished"); }
+void ServiceModeTracking::OnGracefulStop() { LOG_DEBUG("OnGracefulStop"); }
 
 void ServiceModeTracking::OnMessage(const std::string& message_name, const nlohmann::json& payload) {
   if (message_name == "StartTracking") {

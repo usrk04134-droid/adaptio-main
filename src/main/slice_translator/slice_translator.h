@@ -36,7 +36,7 @@ class SliceTranslator {
   virtual auto SetWeldObjectCalibration(const calibration::WeldObjectCalibration& data)
       -> boost::outcome_v2::result<void> = 0;
   virtual auto AngleFromTorchToScanner(const std::vector<lpcs::Point>& lpcs_points, const macs::Point& axis_position)
-      -> boost::outcome_v2::result<double> = 0;
+      -> std::optional<double> = 0;
 };
 
 auto MakeErrorCode(SliceTranslatorErrorCode) -> std::error_code;

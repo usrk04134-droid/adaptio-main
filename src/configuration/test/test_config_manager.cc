@@ -6,7 +6,7 @@
 #include <string>
 #include <trompeloeil.hpp>  // IWYU pragma: keep
 
-#include "../config_manager.h"
+#include "../config_manager_impl.h"
 #include "configuration/conf_factory.h"
 #include "controller/controller_configuration.h"
 #include "mock/mock_factory.h"
@@ -88,7 +88,7 @@ calibration_fixture_joint_geometry:
     REQUIRE_CALL(mock_factory, CreateConverter(TAG_CWOC, "/etc/adaptio/2.yaml")).RETURN(nullptr);
     REQUIRE_CALL(mock_factory, CreateConverter(TAG_LTC, "/etc/adaptio/3.yaml")).RETURN(nullptr);
 
-    ConfigManager configuration("");
+    ConfigManagerImpl configuration("");
     CHECK_EQ(configuration.Init("/etc/adaptio/configuration.yaml", {}, "/var/lib/adaptio"),
              boost::outcome_v2::success());
 
@@ -215,7 +215,7 @@ calibration_fixture_joint_geometry:
     REQUIRE_CALL(mock_factory, CreateConverter(TAG_CWOC, "/etc/adaptio/2.yaml")).RETURN(nullptr);
     REQUIRE_CALL(mock_factory, CreateConverter(TAG_LTC, "/etc/adaptio/3.yaml")).RETURN(nullptr);
 
-    ConfigManager configuration("");
+    ConfigManagerImpl configuration("");
     CHECK_EQ(configuration.Init("/etc/adaptio/configuration.yaml", {}, "/var/lib/adaptio"),
              boost::outcome_v2::success());
 
@@ -297,7 +297,7 @@ calibration_fixture_joint_geometry:
     REQUIRE_CALL(mock_factory, CreateConverter(TAG_CWOC, "/var/lib/adaptio/2.yaml")).RETURN(nullptr);
     REQUIRE_CALL(mock_factory, CreateConverter(TAG_LTC, "/var/lib/adaptio/3.yaml")).RETURN(nullptr);
 
-    ConfigManager configuration("");
+    ConfigManagerImpl configuration("");
     CHECK_EQ(configuration.Init("/etc/adaptio/configuration.yaml", {}, "/var/lib/adaptio"),
              boost::outcome_v2::success());
   }
@@ -464,7 +464,7 @@ calibration_fixture_joint_geometry:
     REQUIRE_CALL(mock_factory, CreateConverter(TAG_CWOC, "/etc/adaptio/2.yaml")).RETURN(nullptr);
     REQUIRE_CALL(mock_factory, CreateConverter(TAG_LTC, "/etc/adaptio/3.yaml")).RETURN(nullptr);
 
-    ConfigManager configuration("");
+    ConfigManagerImpl configuration("");
     CHECK_EQ(configuration.Init("/etc/adaptio/configuration.yaml", "/tmp/configuration.yaml", "/var/lib/adaptio"),
              boost::outcome_v2::success());
 

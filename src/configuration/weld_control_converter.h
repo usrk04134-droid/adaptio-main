@@ -28,8 +28,6 @@ class WeldControlConfigurationConverter {
       TryUpdate(map, tag + "/scanner_input_interval_ms", config.scanner_input_interval);
       TryUpdate(map, tag + "/adaptivity/gaussian_filter/kernel_size", config.adaptivity.gaussian_filter.kernel_size);
       TryUpdate(map, tag + "/adaptivity/gaussian_filter/sigma", config.adaptivity.gaussian_filter.sigma);
-
-      TryUpdate(map, tag + "/fill_layer_groove_depth_threshold", config.fill_layer_groove_depth_threshold);
       TryUpdate(map, tag + "/handover_grace_seconds", config.handover_grace);
       TryUpdate(map, tag + "/scanner_low_confidence_grace_seconds", config.scanner_low_confidence_grace);
       TryUpdate(map, tag + "/scanner_no_confidence_grace_seconds", config.scanner_no_confidence_grace);

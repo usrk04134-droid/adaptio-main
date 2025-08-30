@@ -11,9 +11,10 @@
 
 #include "helpers.h"
 #include "helpers_abp_parameters.h"
-#include "helpers_calibration.h"
+#include "helpers_joint_geometry.h"
 #include "point3d.h"
 #include "sim-config.h"
+#include "test_utils/testlog.h"
 #include "weld_system_client/weld_system_types.h"
 
 namespace helpers_simulator {
@@ -79,6 +80,9 @@ struct TestParameters {
     WeldSpeed weld_speed;
     double bead_switch_angle;
     std::vector<double> step_up_limits;
+    double cap_corner_offset;
+    int cap_beads;
+    double cap_init_depth;
   };
   ABPParameters abp_parameters;
   struct WeldingParameters {
@@ -96,11 +100,11 @@ struct TestParameters {
     };
     WeldSystemParameters weld_system_1;
     WeldSystemParameters weld_system_2;
+    bool use_edge_sensor;
   };
   WeldingParameters welding_parameters;
   TestJointGeometry test_joint_geometry;
   struct TestCaseParameters {
-    std::optional<std::string> configuration_file;
     std::list<std::string> expected_bead_operations{"steady", "overlapping", "repositioning", "steady"};
     std::map<int, int> expected_beads_in_layer;
   };
@@ -300,7 +304,8 @@ inline auto SetJointGeometry(TestFixture& fixture, deposition_simulator::SimConf
       {"left_max_surface_angle_rad",  test_joint_geometry.left_max_surface_angle_rad },
       {"right_max_surface_angle_rad", test_joint_geometry.right_max_surface_angle_rad},
   });
-  SetJointGeometry(fixture, payload);
+
+  StoreJointGeometryParams(fixture, payload, true);
 }
 
 inline auto ConfigLPCS(deposition_simulator::SimConfig& sim_config, double stickout_m, double scanner_mount_angle) {
@@ -329,7 +334,7 @@ inline auto SetABPParameters(TestFixture& fixture, TestParameters& test_paramete
     json_step_up_limits.push_back(step_up_limit);
   }
 
-  auto const payload = nlohmann::json({
+  auto payload = nlohmann::json({
       {"wallOffset",         test_parameters.abp_parameters.wall_offset_mm   },
       {"beadOverlap",        test_parameters.abp_parameters.bead_overlap     },
       {"stepUpValue",        test_parameters.abp_parameters.step_up_value    },
@@ -344,14 +349,21 @@ inline auto SetABPParameters(TestFixture& fixture, TestParameters& test_paramete
            {"min", test_parameters.abp_parameters.weld_system_2_current.min},
            {"max", test_parameters.abp_parameters.weld_system_2_current.max},
        }                                                                     },
-      {"weldSpeed",
-       {
-           {"min", test_parameters.abp_parameters.weld_speed.min},
-           {"max", test_parameters.abp_parameters.weld_speed.max},
-       }                                                                     },
-      {"beadSwitchAngle",    test_parameters.abp_parameters.bead_switch_angle},
       {"stepUpLimits",       json_step_up_limits                             },
+      {"capCornerOffset",    test_parameters.abp_parameters.cap_corner_offset},
+      {"capBeads",           test_parameters.abp_parameters.cap_beads        },
+      {"capInitDepth",       test_parameters.abp_parameters.cap_init_depth   },
   });
+
+  if (test_parameters.abp_parameters.weld_speed.min > 0.0) {
+    payload["weldSpeed"] = {
+        {"min", test_parameters.abp_parameters.weld_speed.min},
+        {"max", test_parameters.abp_parameters.weld_speed.max},
+    };
+  }
+  if (test_parameters.abp_parameters.bead_switch_angle > 0.0) {
+    payload["beadSwitchAngle"] = test_parameters.abp_parameters.bead_switch_angle;
+  }
   StoreABPParams(fixture, payload, true);
 }
 
@@ -390,6 +402,36 @@ inline auto ConvertFromOptionalAbwVector(const std::vector<std::optional<deposit
   }
 
   return converted;
+}
+
+inline auto GetSliceData(std::vector<deposition_simulator::Point3d>& abws_lpcs, const std::uint64_t time_stamp)
+    -> common::msg::scanner::SliceData {
+  common::msg::scanner::SliceData slice_data{
+      .groove{{.x = ConvertM2Mm(abws_lpcs[0].GetX()), .y = ConvertM2Mm(abws_lpcs[0].GetY())},
+              {.x = ConvertM2Mm(abws_lpcs[1].GetX()), .y = ConvertM2Mm(abws_lpcs[1].GetY())},
+              {.x = ConvertM2Mm(abws_lpcs[2].GetX()), .y = ConvertM2Mm(abws_lpcs[2].GetY())},
+              {.x = ConvertM2Mm(abws_lpcs[3].GetX()), .y = ConvertM2Mm(abws_lpcs[3].GetY())},
+              {.x = ConvertM2Mm(abws_lpcs[4].GetX()), .y = ConvertM2Mm(abws_lpcs[4].GetY())},
+              {.x = ConvertM2Mm(abws_lpcs[5].GetX()), .y = ConvertM2Mm(abws_lpcs[5].GetY())},
+              {.x = ConvertM2Mm(abws_lpcs[6].GetX()), .y = ConvertM2Mm(abws_lpcs[6].GetY())}},
+      .line{{.x = ConvertM2Mm(abws_lpcs[0].GetX()), .y = ConvertM2Mm(abws_lpcs[0].GetY())},
+              {.x = ConvertM2Mm(abws_lpcs[1].GetX()), .y = ConvertM2Mm(abws_lpcs[1].GetY())},
+              {.x = ConvertM2Mm(abws_lpcs[2].GetX()), .y = ConvertM2Mm(abws_lpcs[2].GetY())},
+              {.x = ConvertM2Mm(abws_lpcs[3].GetX()), .y = ConvertM2Mm(abws_lpcs[3].GetY())},
+              {.x = ConvertM2Mm(abws_lpcs[4].GetX()), .y = ConvertM2Mm(abws_lpcs[4].GetY())},
+              {.x = ConvertM2Mm(abws_lpcs[5].GetX()), .y = ConvertM2Mm(abws_lpcs[5].GetY())},
+              {.x = ConvertM2Mm(abws_lpcs[6].GetX()), .y = ConvertM2Mm(abws_lpcs[6].GetY())}},
+      .confidence = common::msg::scanner::SliceConfidence::HIGH,
+      .time_stamp = time_stamp,
+  };
+  return slice_data;
+}
+
+inline auto DumpAbw([[maybe_unused]] const std::vector<deposition_simulator::Point3d>& abws) -> void {
+  TESTLOG("ABW MACS x=[{:.5f} {:.5f} {:.5f} {:.5f} {:.5f} {:.5f} {:.5f}]", abws[0].GetX(), abws[1].GetX(),
+          abws[2].GetX(), abws[3].GetX(), abws[4].GetX(), abws[5].GetX(), abws[6].GetX());
+  TESTLOG("ABW MACS z=[{:.5f} {:.5f} {:.5f} {:.5f} {:.5f} {:.5f} {:.5f}]", abws[0].GetZ(), abws[1].GetZ(),
+          abws[2].GetZ(), abws[3].GetZ(), abws[4].GetZ(), abws[5].GetZ(), abws[6].GetZ());
 }
 
 }  // End namespace helpers_simulator
