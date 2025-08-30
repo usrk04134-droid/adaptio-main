@@ -37,7 +37,7 @@ class CalibrationManagerV2Impl : public scanner_client::ScannerObserver, public 
   // ScannerObserver
   void OnScannerStarted(bool success) override;
   void OnScannerStopped(bool success) override;
-  void OnScannerDataUpdate(const lpcs::Slice& data, const macs::Point& axis_position) override;
+  void OnScannerDataUpdateV2(const lpcs::Slice& data, const macs::Point& axis_position) override;
 
   // coordination::CalibrationStatus
   auto LaserToTorchCalibrationValid() const -> bool override;

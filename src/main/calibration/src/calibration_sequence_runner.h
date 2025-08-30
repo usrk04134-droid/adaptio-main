@@ -30,7 +30,7 @@ class CalibrationSequenceRunner {
                             OnProgress on_progress, RunnerConfiguration sequence_config);
 
   void Start();
-  void OnScannerDataUpdate(const lpcs::Slice& data, const macs::Point& axis_position);
+  void OnScannerDataUpdateV2(const lpcs::Slice& data, const macs::Point& axis_position);
   auto Busy() const -> bool;
 
  private:

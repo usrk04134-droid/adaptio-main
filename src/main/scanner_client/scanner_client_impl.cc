@@ -124,7 +124,7 @@ void ScannerClientImpl::OnGetSlidesPosition(std::uint64_t time_stamp, double hor
 
   if (scanner_data_in_process_.time_stamp == time_stamp) {
     for (auto& observer : observers_) {
-      observer->OnScannerDataUpdate(scanner_data_in_process_, position);
+      observer->OnScannerDataUpdateV2(scanner_data_in_process_, position);
     }
   } else {
     LOG_TRACE("Time stamp mismatch");

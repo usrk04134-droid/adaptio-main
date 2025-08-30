@@ -41,13 +41,13 @@ participant "Scanner" as Scanner
   note over WebHMI : Left wall position \nbutton pressed
   WebHMI -> CalibrationMgrV2 : WeldObjectCalLeftPos()
 
-  Scanner -> CalibrationMgrV2 : OnScannerDataUpdate(LPCSSlice, SliderPosition)
+  Scanner -> CalibrationMgrV2 : OnScannerDataUpdateV2(LPCSSlice, SliderPosition)
   note over CalibrationMgrV2 : Store slide cross position and latest ABW slice\nfor left wall
   CalibrationMgrV2 -> WebHMI : WeldObjectCalLeftPosRsp(result=ok)
 
   note over WebHMI : Right wall position \nbutton pressed
   WebHMI -> CalibrationMgrV2 : WeldObjectCalRightPos()
-  Scanner -> CalibrationMgrV2 : OnScannerDataUpdate(LPCSSlice, SliderPosition)
+  Scanner -> CalibrationMgrV2 : OnScannerDataUpdateV2(LPCSSlice, SliderPosition)
   note over CalibrationMgrV2 : Store slide cross position and latest ABW slice\nfor right wall
   CalibrationMgrV2 -> WebHMI : WeldObjectCalRightPosRsp(result=ok)
 
@@ -58,7 +58,7 @@ participant "Scanner" as Scanner
   loop All positions in grid
     CalibrationMgrV2 -> Kinematics : SetSlidesPosition
     loop Until in_position
-      Scanner -> CalibrationMgrV2 : OnScannerDataUpdate(LPCSSlice, SliderPosition)
+      Scanner -> CalibrationMgrV2 : OnScannerDataUpdateV2(LPCSSlice, SliderPosition)
       CalibrationMgrV2 -> Kinematics : GetSlidesStatus()
     end
     note over CalibrationMgrV2
