@@ -17,14 +17,16 @@ def test_calibration(zmq_sockets, adaptio_app, config_file):
     time.sleep(10)
 
     # Check adaptio started by print adaptio version
+    got_version = False
     for _ in LoopUntil(15.0):
         sender.send(GetAdaptioVersion())
         version_rsp = receiver.poll_specific("GetAdaptioVersionRsp")
         if version_rsp is not None:
             print("Adaptio version: " + version_rsp["payload"]["version"])
+            got_version = True
             break
         time.sleep(1)
-    else:
+    if not got_version:
         assert False, "GetAdaptioVersion not received"
 
     # LaserToTorch Calibration
@@ -36,12 +38,14 @@ def test_calibration(zmq_sockets, adaptio_app, config_file):
     sender.send(ltt_cal_msg)
 
     # Wait for LaserToTorchCalibrationRsp
+    got_ltt = False
     for _ in LoopUntil(10.0):
         if receiver.verify("LaserToTorchCalibrationRsp",
                            lambda payload: payload["valid"] is True):
             assert True, "LaserToTorchCalibrationRsp received"
+            got_ltt = True
             break
-    else:
+    if not got_ltt:
         assert False, "LaserToTorchCalibrationRsp not received"
 
     time.sleep(1)
