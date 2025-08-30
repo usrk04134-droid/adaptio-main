@@ -82,11 +82,23 @@ void JointGeometryProviderImpl::OnGetJointGeometry() {
 }
 
 void JointGeometryProviderImpl::OnSetJointGeometry(nlohmann::json const& payload) {
-  auto sjg = StoredJointGeometry::FromJson(ConvertToDbJointGeometryFormat(payload));
-  bool ok  = sjg.has_value() && joint_geometry_storage_.Store(sjg.value());
-  web_hmi_->Send("SetJointGeometryRsp", ok ? SUCCESS_PAYLOAD : FAILURE_PAYLOAD);
-  if (ok && on_update_) {
-    on_update_();
+  try {
+    auto sjg = StoredJointGeometry::FromJson(ConvertToDbJointGeometryFormat(payload));
+    bool ok  = sjg.has_value() && joint_geometry_storage_.Store(sjg.value());
+    web_hmi_->Send("SetJointGeometryRsp", ok ? SUCCESS_PAYLOAD : FAILURE_PAYLOAD);
+    if (ok && on_update_) {
+      on_update_();
+    }
+  } catch (const std::exception& e) {
+    LOG_ERROR("OnSetJointGeometry exception: {}", e.what());
+    if (web_hmi_) {
+      web_hmi_->Send("SetJointGeometryRsp", FAILURE_PAYLOAD);
+    }
+  } catch (...) {
+    LOG_ERROR("OnSetJointGeometry unknown exception");
+    if (web_hmi_) {
+      web_hmi_->Send("SetJointGeometryRsp", FAILURE_PAYLOAD);
+    }
   }
 }
 
