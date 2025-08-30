@@ -156,7 +156,8 @@ auto ConfigManager::ReadConfigurationFile(const fs::path& config_file, bool must
   for (auto& config : config_map) {
     // Key is "configuration/<tag>", extract tag
     auto key       = config.first;
-    const auto tag = key.substr(key.find('/') + 1, key.length() - 1);
+    const auto pos = key.find('/');
+    const auto tag = pos == std::string::npos ? key : key.substr(pos + 1);
 
     if (!converters_.contains(tag)) {
       LOG_TRACE("Configuration tag does not exist: {}", tag);
