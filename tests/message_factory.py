@@ -17,15 +17,42 @@ def StartTracking():
     }
 
 
-def LaserToTorchCalibration():
+def LaserTorchCalSet():
     return {
-        "name": "LaserToTorchCalibration",
-        "payload": {"offset": 0, "angle": 0, "stickout": 0},
+        "name": "LaserTorchCalSet",
+        "payload": {"distanceLaserTorch": 0, "stickout": 0, "scannerMountAngle": 0},
     }
 
 
-def WeldObjectCalibration():
-    return {"name": "WeldObjectCalibration", "payload": {"radius": 0, "stickout": 0}}
+def LaserTorchCalGet():
+    return {"name": "LaserTorchCalGet", "payload": {}}
+
+
+def WeldObjectCalStart():
+    return {
+        "name": "WeldObjectCalStart",
+        "payload": {"wireDiameter": 0, "stickout": 0, "weldObjectRadius": 0},
+    }
+
+
+def WeldObjectCalStop():
+    return {"name": "WeldObjectCalStop", "payload": {}}
+
+
+def WeldObjectCalLeftPos():
+    return {"name": "WeldObjectCalLeftPos", "payload": {}}
+
+
+def WeldObjectCalRightPos():
+    return {"name": "WeldObjectCalRightPos", "payload": {}}
+
+
+def WeldObjectCalGet():
+    return {"name": "WeldObjectCalGet", "payload": {}}
+
+
+def WeldObjectCalSet():
+    return {"name": "WeldObjectCalSet", "payload": {}}
 
 
 def GetSlidesPosition():

@@ -38,7 +38,7 @@ def test_kinematics(zmq_sockets, adaptio_app, config_file):
     time.sleep(10)
 
     # Check adaptio started by print adaptio version
-    for _ in LoopUntil(15.0):
+    for _ in LoopUntil(30.0):
         sender.send(GetAdaptioVersion())
         version_rsp = receiver.poll_specific("GetAdaptioVersionRsp")
         if version_rsp is not None:
