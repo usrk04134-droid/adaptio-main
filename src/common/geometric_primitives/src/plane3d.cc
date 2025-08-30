@@ -11,7 +11,8 @@ namespace geometric_primitives {
 
 Plane3d::Plane3d(Eigen::Vector3d normal, const Point3d &point_in_plane)
     : normal_(normal), point_in_plane_(point_in_plane) {
-  normal.normalize();
+  // Ensure the stored normal is normalized
+  normal_.normalize();
 }
 
 auto Plane3d::GetNormal() const -> Eigen::Vector3d { return this->normal_; }

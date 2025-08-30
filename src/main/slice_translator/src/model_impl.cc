@@ -132,7 +132,15 @@ auto ModelImpl::CreateProjectionCircle(const common::Vector3D& rot_center,
                                        Point3d& point_to_project) const -> Circle3d {
   // Projection/rotation entities
   Vector3d calib_rot_center_1 = CommonVector2EigenVector(rot_center);
-  Vector3d n_circle_1         = CommonVector2EigenVector(weld_object_rotation_axis).normalized();
+  Vector3d n_circle_1         = CommonVector2EigenVector(weld_object_rotation_axis);
+  const double axis_norm      = n_circle_1.norm();
+  if (axis_norm < 1e-12 || !std::isfinite(axis_norm)) {
+    // Fallback to X-axis if rotation axis is invalid to avoid NaNs downstream
+    LOG_ERROR("Invalid weld_object_rotation_axis, falling back to default axis (1,0,0)");
+    n_circle_1 = Vector3d(1.0, 0.0, 0.0);
+  } else {
+    n_circle_1.normalize();
+  }
   Vector3d p_macs             = point_to_project.ToVec();
 
   // Adjusted projection circle center
@@ -143,6 +151,10 @@ auto ModelImpl::CreateProjectionCircle(const common::Vector3D& rot_center,
 
   // Rotate/project to torch plane by computing intersection between ABW circle and torch plane
   double dist_to_center = (p_macs - p_circle_1).norm();  // Projection circle radius
+  if (!std::isfinite(dist_to_center)) {
+    LOG_ERROR("Non-finite projection circle radius computed; clamping to 0.0");
+    dist_to_center = 0.0;
+  }
   Circle3d projection_circle{n_circle_1, dist_to_center, circle_center};
 
 LOG_DEBUG("projection circle: r={:.6f}, center=({:.6f}, {:.6f}, {:.6f}), n=({:.6f}, {:.6f}, {:.6f}), ref={}",
@@ -157,13 +169,37 @@ LOG_DEBUG("projection circle: r={:.6f}, center=({:.6f}, {:.6f}, {:.6f}), n=({:.6
 auto ModelImpl::RotateToPlane(const Circle3d& projection_circle, Plane3d& target_plane) const -> Point3d {
   std::vector<Point3d> intersection_points = projection_circle.Intersect(target_plane);
   LOG_DEBUG("found {} intersection point(s)", intersection_points.size());
+  // Filter out any invalid points (NaNs/Infs) defensively
+  std::vector<Point3d> valid_points;
+  valid_points.reserve(intersection_points.size());
   for (std::size_t i = 0; i < intersection_points.size(); ++i) {
     const auto &pt = intersection_points[i];
-    LOG_DEBUG("intersection_points[{}]: ({:.6f}, {:.6f}, {:.6f}), ref={}",
-            i, pt.GetX(), pt.GetY(), pt.GetZ(),
-            static_cast<int>(pt.GetRefSystem()));
+    const double x = pt.GetX();
+    const double y = pt.GetY();
+    const double z = pt.GetZ();
+    if (std::isfinite(x) && std::isfinite(y) && std::isfinite(z)) {
+      valid_points.push_back(pt);
+      LOG_DEBUG("intersection_points[{}]: ({:.6f}, {:.6f}, {:.6f}), ref={}",
+                i, x, y, z, static_cast<int>(pt.GetRefSystem()));
+    } else {
+      LOG_ERROR("Dropping invalid intersection point[{}]: ({}, {}, {}), ref={}",
+                i, x, y, z, static_cast<int>(pt.GetRefSystem()));
+    }
   }
-  Point3d int_point                        = FindClosestPoint(intersection_points, {0, 0, 0, CoordinateSystem::MACS});
+  if (valid_points.empty()) {
+    // Fallback: return orthogonal projection of origin onto target plane
+    Eigen::Vector3d n   = target_plane.GetNormal();
+    if (n.norm() < 1e-12 || !std::isfinite(n.norm())) {
+      n = {0.0, 1.0, 0.0};
+    } else {
+      n.normalize();
+    }
+    Eigen::Vector3d p0  = target_plane.GetPointInPlane().ToVec();
+    Eigen::Vector3d proj = p0 - n.dot(p0) * n;
+    LOG_ERROR("No valid circle-plane intersection; using plane origin projection fallback");
+    return {proj(0), proj(1), proj(2), target_plane.GetRefSystem()};
+  }
+  Point3d int_point = FindClosestPoint(valid_points, {0, 0, 0, CoordinateSystem::MACS});
   return int_point;
 }
 
