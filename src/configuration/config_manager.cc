@@ -34,7 +34,7 @@ ConfigManager::ConfigManager(const fs::path& path_scanner_calibration)
   converters_.insert({TAG_LTC, std::make_pair(fs::path(), nullptr)});
 
   auto* factory = GetFactory();
-  fh_           = factory->CreateFileHandler();
+  fh_ = factory->CreateFileHandler();
 }
 
 auto ConfigManager::Init(const fs::path& default_config, std::optional<fs::path> cmd_line_config,
@@ -90,7 +90,7 @@ auto ConfigManager::Init(const fs::path& default_config, std::optional<fs::path>
 auto ConfigManager::CheckConfigFiles() -> boost::outcome_v2::result<void> {
   LOG_DEBUG("CheckConfigFiles");
   for (const auto& config : converters_) {
-    auto tag  = config.first;
+    auto tag = config.first;
     auto file = config.second.first;
 
     LOG_INFO("Configuration file used: tag: {} file: {}", tag, file.string());
@@ -113,7 +113,7 @@ auto ConfigManager::ReadConfigFiles() -> boost::outcome_v2::result<void> {
   auto* factory = GetFactory();
 
   for (auto& config : converters_) {
-    auto tag  = config.first;
+    auto tag = config.first;
     auto file = config.second.first;
 
     auto converter = factory->CreateConverter(tag, file);
@@ -142,7 +142,7 @@ auto ConfigManager::ReadConfigurationFile(const fs::path& config_file, bool must
     return boost::outcome_v2::success();
   }
 
-  auto yaml_string              = fh_->ReadFile(config_file.string());
+  auto yaml_string = fh_->ReadFile(config_file.string());
   auto maybe_configuration_yaml = common::file::Yaml::FromString(yaml_string, TAG_CONF);
   if (maybe_configuration_yaml.has_error()) {
     LOG_ERROR("Could not parse yaml string with error code: {}", maybe_configuration_yaml.error().to_string());
@@ -155,7 +155,7 @@ auto ConfigManager::ReadConfigurationFile(const fs::path& config_file, bool must
 
   for (auto& config : config_map) {
     // Key is "configuration/<tag>", extract tag
-    auto key       = config.first;
+    auto key = config.first;
     const auto tag = key.substr(key.find('/') + 1, key.length() - 1);
 
     if (!converters_.contains(tag)) {
@@ -206,7 +206,7 @@ void ConfigManager::TryCopyConfigFiles(fs::path const& default_config, fs::path 
   // If they not already exist in /var/lib/adaptio
   auto try_copy_file = [this, default_config, path_data](auto const& sub_config) {
     auto from_file = fs::path(default_config.parent_path() / sub_config.first.filename());
-    auto to_file   = path_data.string() + "/" + from_file.filename().string();
+    auto to_file = path_data.string() + "/" + from_file.filename().string();
     if (fs::exists(from_file) && !fs::exists(to_file)) {
       fs::copy_file(from_file, to_file, fs::copy_options::overwrite_existing);
       fh_->SetWritePermission(to_file);
@@ -227,7 +227,7 @@ auto ConfigManager::GetCircWeldObjectCalib()
 auto ConfigManager::GetLaserTorchCalib()
     -> std::pair<std::optional<calibration::LaserTorchCalibration>, ConfigurationHandle*> {
   auto* converter = converters_[TAG_LTC].second.get();
-  auto maybe_ltc  = std::any_cast<std::optional<calibration::LaserTorchCalibration>>(converter->GetConfig());
+  auto maybe_ltc = std::any_cast<std::optional<calibration::LaserTorchCalibration>>(converter->GetConfig());
   return std::make_pair(maybe_ltc, converter);
 }
 
@@ -244,7 +244,7 @@ auto ConfigManager::GetScannerCalibration(const std::string& scanner_serial_numb
 
   try {
     for (const auto& entry : fs::directory_iterator(path_directory)) {
-      auto const path      = entry.path().string();
+      auto const path = entry.path().string();
       auto const extension = entry.path().extension();
       if (extension != ".yaml" && extension != ".yml") {
         LOG_DEBUG("Skipping non-yaml file: {}", path);
