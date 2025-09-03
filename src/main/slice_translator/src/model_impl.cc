@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <Eigen/Eigen>
 #include <numbers>
 #include <optional>

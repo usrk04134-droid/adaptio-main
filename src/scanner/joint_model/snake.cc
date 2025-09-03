@@ -15,7 +15,6 @@
 #include <vector>
 
 #include "common/math/centroids.h"
-#include "common/math/value.h"
 #include "scanner/image/camera_model.h"
 #include "scanner/image/image.h"
 #include "scanner/image/image_types.h"

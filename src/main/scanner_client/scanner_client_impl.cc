@@ -1,6 +1,7 @@
 #include "scanner_client/scanner_client_impl.h"
 
 #include <cstdint>
+#include <cmath>
 #include <vector>
 
 #include "common/logging/application_log.h"
