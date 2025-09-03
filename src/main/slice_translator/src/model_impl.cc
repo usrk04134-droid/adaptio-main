@@ -37,9 +37,9 @@ auto ModelImpl::LPCSToMCS(const std::vector<lpcs::Point>& lpcs_points, const mac
   std::vector<macs::Point> mcs_points;
   macs::Point mcs_point;
 
-    for (std::size_t i = 0; i < lpcs_points.size(); ++i) {
-        LOG_DEBUG("groove[{}]: ({:.6f}, {:.6f})", i, lpcs_points[i].x, lpcs_points[i].y);
-      }
+  for (std::size_t i = 0; i < lpcs_points.size(); ++i) {
+    LOG_DEBUG("groove[{}]: ({:.6f}, {:.6f})", i, lpcs_points[i].x, lpcs_points[i].y);
+  }
 
   for (const auto& lpcs_point : lpcs_points) {
     mcs_point = TransformAndRotateToTorchPlane(rot_center_, {scanner_mount_angle_, delta_rot_y_, delta_rot_z_},
@@ -57,8 +57,8 @@ auto ModelImpl::MCSToLPCS(const std::vector<macs::Point>& mcs_points, const macs
   lpcs::Point lpcs_point;
 
   for (std::size_t i = 0; i < lpcs_points.size(); ++i) {
-        LOG_DEBUG("MCSToLPCS[{}]: ({:.6f}, {:.6f})", i, lpcs_points[i].x, lpcs_points[i].y);
-      }
+    LOG_DEBUG("MCSToLPCS[{}]: ({:.6f}, {:.6f})", i, lpcs_points[i].x, lpcs_points[i].y);
+  }
   for (const auto& mcs_point : mcs_points) {
     lpcs_point = TransformAndRotateToLaserPlane(rot_center_, {scanner_mount_angle_, delta_rot_y_, delta_rot_z_},
                                                 weld_object_rotation_axis_, torch_to_laser_translation_, mcs_point,
@@ -76,16 +76,14 @@ auto ModelImpl::TransformAndRotateToLaserPlane(const common::Vector3D& rot_cente
   // Define laser plane to project/rotate onto (MACS)
   Point3d laser_plane_point_macs =
       TransformLPCStoMACS(scanner_angles, torch_to_laser_translation, slide_position, {0.0, 0.0, 0.0, LPCS});
-  
+
   Point3d laser_plane_normal_macs =
       TransformLPCStoMACS(scanner_angles, torch_to_laser_translation, slide_position, {0.0, 0.0, 1.0, LPCS}, false);
   Plane3d laser_plane_macs{laser_plane_normal_macs.ToVec(), laser_plane_point_macs};
 
-  LOG_DEBUG("laser_plane_normal_macs: x={:.6f}, y={:.6f}, z={:.6f}, ref={}",
-            laser_plane_normal_macs.GetX(),
-            laser_plane_normal_macs.GetY(),
-            laser_plane_normal_macs.GetZ(),
-             static_cast<int>(laser_plane_point_macs.GetRefSystem()));
+  LOG_DEBUG("laser_plane_normal_macs: x={:.6f}, y={:.6f}, z={:.6f}, ref={}", laser_plane_normal_macs.GetX(),
+            laser_plane_normal_macs.GetY(), laser_plane_normal_macs.GetZ(),
+            static_cast<int>(laser_plane_point_macs.GetRefSystem()));
 
   // The point (MACS) to project and transform to LPCS
   Point3d point_to_project_macs{point_macs.horizontal, 0.0, point_macs.vertical, MACS};
@@ -145,11 +143,9 @@ auto ModelImpl::CreateProjectionCircle(const common::Vector3D& rot_center,
   double dist_to_center = (p_macs - p_circle_1).norm();  // Projection circle radius
   Circle3d projection_circle{n_circle_1, dist_to_center, circle_center};
 
-LOG_DEBUG("projection circle: r={:.6f}, center=({:.6f}, {:.6f}, {:.6f}), n=({:.6f}, {:.6f}, {:.6f}), ref={}",
-          dist_to_center,
-          circle_center.GetX(), circle_center.GetY(), circle_center.GetZ(),
-          n_circle_1(0), n_circle_1(1), n_circle_1(2),
-          static_cast<int>(circle_center.GetRefSystem()));
+  LOG_DEBUG("projection circle: r={:.6f}, center=({:.6f}, {:.6f}, {:.6f}), n=({:.6f}, {:.6f}, {:.6f}), ref={}",
+            dist_to_center, circle_center.GetX(), circle_center.GetY(), circle_center.GetZ(), n_circle_1(0),
+            n_circle_1(1), n_circle_1(2), static_cast<int>(circle_center.GetRefSystem()));
 
   return projection_circle;
 }
@@ -158,12 +154,11 @@ auto ModelImpl::RotateToPlane(const Circle3d& projection_circle, Plane3d& target
   std::vector<Point3d> intersection_points = projection_circle.Intersect(target_plane);
   LOG_DEBUG("found {} intersection point(s)", intersection_points.size());
   for (std::size_t i = 0; i < intersection_points.size(); ++i) {
-    const auto &pt = intersection_points[i];
-    LOG_DEBUG("intersection_points[{}]: ({:.6f}, {:.6f}, {:.6f}), ref={}",
-            i, pt.GetX(), pt.GetY(), pt.GetZ(),
-            static_cast<int>(pt.GetRefSystem()));
+    const auto& pt = intersection_points[i];
+    LOG_DEBUG("intersection_points[{}]: ({:.6f}, {:.6f}, {:.6f}), ref={}", i, pt.GetX(), pt.GetY(), pt.GetZ(),
+              static_cast<int>(pt.GetRefSystem()));
   }
-  Point3d int_point                        = FindClosestPoint(intersection_points, {0, 0, 0, CoordinateSystem::MACS});
+  Point3d int_point = FindClosestPoint(intersection_points, {0, 0, 0, CoordinateSystem::MACS});
   return int_point;
 }
 

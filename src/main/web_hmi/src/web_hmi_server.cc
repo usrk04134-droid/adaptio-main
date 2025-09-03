@@ -43,7 +43,6 @@ WebHmiServer::WebHmiServer(zevs::CoreSocket* in_socket, zevs::CoreSocket* out_so
   LOG_DEBUG("Starting WebHmiServer");
   auto handler = [this](zevs::MessagePtr msg) { this->OnMessage(std::move(msg)); };
   in_socket_->SetHandler(handler);
-
 }
 
 auto WebHmiServer::CheckSubscribers(std::string const& topic, nlohmann::json const& payload) -> bool {
