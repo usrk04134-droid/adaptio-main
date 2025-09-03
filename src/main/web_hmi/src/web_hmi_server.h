@@ -20,12 +20,15 @@ class WebHmiServer : public slice_translator::SliceObserver, public WebHmi {
  public:
   WebHmiServer(zevs::CoreSocket* in_socket, zevs::CoreSocket* out_socket,
                joint_geometry::JointGeometryProvider* joint_geometry_provider,
-               kinematics::KinematicsClient* kinematics_client, coordination::ActivityStatus* activity_status);
+               kinematics::KinematicsClient* kinematics_client,
+               coordination::ActivityStatus* activity_status);
 
   void OnMessage(zevs::MessagePtr message);
 
   // SliceObserver
-  void Receive(const macs::Slice& machine_data, const lpcs::Slice& scanner_data, const macs::Point& axis_position,
+  void Receive(const macs::Slice& machine_data,
+               const lpcs::Slice& scanner_data,
+               const macs::Point& axis_position,
                const double angle_from_torch_to_scanner) override;
 
   // WebHmi interface
