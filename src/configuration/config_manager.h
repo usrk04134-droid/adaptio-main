@@ -48,20 +48,20 @@ class ConfigManager {
                     const std::filesystem::path& path_data) -> boost::outcome_v2::result<void> = 0;
 
   // Configuration getters
-  virtual auto GetController() -> controller::ControllerConfigurationData             = 0;
+  virtual auto GetController() -> controller::ControllerConfigurationData = 0;
   virtual auto GetImageProvider() -> scanner::image_provider::ImageProviderConfigData = 0;
   virtual auto GetScannerCalibration(const std::string& scanner_serial_number)
-      -> std::optional<scanner::ScannerCalibrationData>                              = 0;
-  virtual auto GetScanner() -> scanner::ScannerConfigurationData                     = 0;
+      -> std::optional<scanner::ScannerCalibrationData> = 0;
+  virtual auto GetScanner() -> scanner::ScannerConfigurationData = 0;
   virtual auto GetCalibrationFixtureJointGeometry() -> joint_geometry::JointGeometry = 0;
   virtual auto GetCircWeldObjectCalib()
       -> std::pair<std::optional<calibration::WeldObjectCalibration>, ConfigurationHandle*> = 0;
   virtual auto GetLaserTorchCalib()
       -> std::pair<std::optional<calibration::LaserTorchCalibration>, ConfigurationHandle*> = 0;
-  virtual auto GetWeldControlConfiguration() -> weld_control::Configuration                 = 0;
-  virtual auto GetTolerancesConfiguration() -> tolerances::Configuration                    = 0;
-  virtual auto GetCalibrationConfiguration() -> calibration::Configuration                  = 0;
-  virtual auto GetImageLoggingConfiguration() -> image_logging::Configuration               = 0;
+  virtual auto GetWeldControlConfiguration() -> weld_control::Configuration = 0;
+  virtual auto GetTolerancesConfiguration() -> tolerances::Configuration = 0;
+  virtual auto GetCalibrationConfiguration() -> calibration::Configuration = 0;
+  virtual auto GetImageLoggingConfiguration() -> image_logging::Configuration = 0;
 };
 
 }  // namespace configuration
