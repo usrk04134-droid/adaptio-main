@@ -1,3 +1,4 @@
+// clang-format off
 #include "scanner_client/scanner_client_impl.h"
 
 #include <cstdint>
@@ -68,8 +69,8 @@ void ScannerClientImpl::Update(const UpdateData& data) {
   joint_geometry_.upper_joint_width_mm     = data.upper_width;
   joint_geometry_.left_joint_angle_rad     = data.left_wall_angle;
   joint_geometry_.right_joint_angle_rad    = data.right_wall_angle;
-  joint_geometry_.tolerance.upper_width_mm = data.tolerance.upper_width,
-  joint_geometry_.tolerance.wall_angle_rad = data.tolerance.wall_angle,
+  joint_geometry_.tolerance.upper_width_mm = data.tolerance.upper_width;
+  joint_geometry_.tolerance.wall_angle_rad = data.tolerance.wall_angle;
 
   socket_->Send(common::msg::scanner::Update{
       .joint_geometry  = joint_geometry_,
@@ -196,3 +197,4 @@ void ScannerClientImpl::OnStopRsp(common::msg::scanner::StopRsp stopped) {
 }
 
 }  // namespace scanner_client
+// clang-format on
