@@ -6,7 +6,6 @@
 
 #include "../config_manager.h"
 #include "../scanner_converter.h"
-#include "controller/pn_driver/pn_driver.h"
 #include "mock/mock_factory.h"
 #include "mock/mock_file_handler.h"
 

@@ -10,7 +10,6 @@
 #include <utility>
 
 #include "../web_hmi_json_helpers.h"
-#include "calibration/calibration_manager.h"
 #include "common/logging/application_log.h"
 #include "common/zevs/zevs_core.h"
 #include "coordination/activity_status.h"

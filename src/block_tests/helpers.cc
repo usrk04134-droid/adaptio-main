@@ -5,6 +5,8 @@
 #include <SQLiteCpp/Database.h>
 
 #include <boost/outcome.hpp>
+#include <boost/outcome/result.hpp>
+#include <boost/outcome/success_failure.hpp>
 #include <cassert>
 #include <chrono>
 #include <cstdint>

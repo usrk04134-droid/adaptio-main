@@ -30,14 +30,12 @@
 #include "slice_translator/coordinates_translator.h"
 #include "slice_translator/src/model_impl.h"
 #include "tracking/src/tracking_manager_impl.h"
-#include "tracking/tracking_manager.h"
 #include "web_hmi/src/service_mode_manager_impl.h"
 #include "web_hmi/src/web_hmi_server.h"
 #include "weld_control/src/delay_buffer.h"
 #include "weld_control/src/settings_provider.h"
 #include "weld_control/src/weld_control_impl.h"
 #include "weld_control/src/weld_sequence_config_impl.h"
-#include "weld_control/weld_control_types.h"
 #include "weld_system_client/src/weld_system_client_impl.h"
 
 Application::Application(configuration::ConfigManager* configuration, std::filesystem::path const& path_events,
