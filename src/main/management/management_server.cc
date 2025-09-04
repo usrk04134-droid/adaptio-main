@@ -176,8 +176,7 @@ auto ManagementServer::UpdateReadyState() -> bool {
   }
 
   auto laser_to_torch_cal_valid = calibration_status_v2_->LaserToTorchCalibrationValid();
-  auto weld_object_cal_valid =
-      calibration_status_v2_->WeldObjectCalibrationValid();
+  auto weld_object_cal_valid    = calibration_status_v2_->WeldObjectCalibrationValid();
 
   auto joint_geometry = joint_geometry_provider_->GetJointGeometry();
 

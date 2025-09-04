@@ -64,10 +64,10 @@ class Application {
   std::unique_ptr<event::EventHandlerImpl> event_handler_;
   std::unique_ptr<kinematics::KinematicsClient> kinematics_client_;
   std::unique_ptr<scanner_client::ScannerClientImpl> scanner_client_;
-  //std::unique_ptr<slice_translator::SliceTranslatorImpl> slice_translator_;
+  // std::unique_ptr<slice_translator::SliceTranslatorImpl> slice_translator_;
   std::unique_ptr<slice_translator::ModelImpl> model_impl_;
   std::unique_ptr<calibration::CalibrationSolverImpl> calibration_solver_;
-  //std::unique_ptr<calibration::CalibrationManagerImpl> calibration_manager_;
+  // std::unique_ptr<calibration::CalibrationManagerImpl> calibration_manager_;
   std::unique_ptr<calibration::CalibrationManagerV2Impl> calibration_manager_v2_;
   std::unique_ptr<tracking::TrackingManagerImpl> tracking_manager_;
   std::unique_ptr<slice_translator::CoordinatesTranslator> coordinates_translator_;

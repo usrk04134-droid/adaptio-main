@@ -10,13 +10,10 @@
 
 using slice_translator::CoordinatesTranslator;
 
-CoordinatesTranslator::CoordinatesTranslator(
-                                             SliceTranslatorServiceV2* slice_translator_v2)
+CoordinatesTranslator::CoordinatesTranslator(SliceTranslatorServiceV2* slice_translator_v2)
     : slice_translator_v2_(slice_translator_v2) {}
 
-void CoordinatesTranslator::AddObserver(SliceObserver* observer) { 
-  observers_.push_back(observer);
-}
+void CoordinatesTranslator::AddObserver(SliceObserver* observer) { observers_.push_back(observer); }
 
 void CoordinatesTranslator::OnScannerDataUpdate(const lpcs::Slice& data, const macs::Point& axis_position) {
   if (slice_translator_v2_->Available()) {

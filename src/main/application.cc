@@ -94,8 +94,7 @@ auto Application::Run(const std::string& event_loop_name, const std::string& end
   tracking_manager_ = std::make_unique<tracking::TrackingManagerImpl>();
 
   // CoordinatesTranslator
-  coordinates_translator_ =
-      std::make_unique<slice_translator::CoordinatesTranslator>(model_impl_.get());
+  coordinates_translator_ = std::make_unique<slice_translator::CoordinatesTranslator>(model_impl_.get());
   scanner_client_->AddObserver(coordinates_translator_.get());
 
   // Management socket
@@ -115,8 +114,8 @@ auto Application::Run(const std::string& event_loop_name, const std::string& end
 
   // Service Mode
   web_hmi_server_ = std::make_unique<web_hmi::WebHmiServer>(web_hmi_in_socket_.get(), web_hmi_out_socket_.get(),
-                                                            joint_geometry_provider_.get(),
-                                                            kinematics_client_.get(), activity_status_.get());
+                                                            joint_geometry_provider_.get(), kinematics_client_.get(),
+                                                            activity_status_.get());
 
   // Image logging manager
   auto image_logger_config = configuration_->GetImageLoggingConfiguration();
@@ -156,29 +155,29 @@ auto Application::Run(const std::string& event_loop_name, const std::string& end
       scanner_client_.get(), timer_.get(), event_handler_.get(), bead_control_.get(), delay_buffer_.get(),
       system_clock_now_func_, steady_clock_now_func_, registry_, image_logging_manager_.get(), model_impl_.get(),
       database_);
-/*
-  auto weld_object_calibration_allowed = [this]() -> bool {
-    auto const mode          = weld_control_->GetMode();
-    auto const state         = weld_control_->GetState();
-    auto const tracking_mode = weld_control_->GetTrackingMode();
+  /*
+    auto weld_object_calibration_allowed = [this]() -> bool {
+      auto const mode          = weld_control_->GetMode();
+      auto const state         = weld_control_->GetState();
+      auto const tracking_mode = weld_control_->GetTrackingMode();
 
-    if (state == weld_control::State::WELDING) {
-      LOG_ERROR("Setting weld object calibration not allowed when arcing");
-      return false;
-    }
+      if (state == weld_control::State::WELDING) {
+        LOG_ERROR("Setting weld object calibration not allowed when arcing");
+        return false;
+      }
 
-    if ((mode == weld_control::Mode::JOINT_TRACKING) &&
-        (tracking_mode != tracking::TrackingMode::TRACKING_CENTER_HEIGHT)) {
-      LOG_ERROR("Setting weld object calibration when tracking only allowed with center tracking");
-      return false;
-    }
+      if ((mode == weld_control::Mode::JOINT_TRACKING) &&
+          (tracking_mode != tracking::TrackingMode::TRACKING_CENTER_HEIGHT)) {
+        LOG_ERROR("Setting weld object calibration when tracking only allowed with center tracking");
+        return false;
+      }
 
-    LOG_INFO("Resetting delay buffer due to new weld object calibration set");
-    return true;
-  };
+      LOG_INFO("Resetting delay buffer due to new weld object calibration set");
+      return true;
+    };
 
-  calibration_manager_->SetWOCalCoordinator(weld_object_calibration_allowed);
-*/
+    calibration_manager_->SetWOCalCoordinator(weld_object_calibration_allowed);
+  */
   service_mode_manager_ = std::make_unique<web_hmi::ServiceModeManagerImpl>(
       web_hmi_out_socket_.get(), kinematics_client_.get(), joint_geometry_provider_.get(), weld_control_.get(),
       activity_status_.get(), web_hmi_server_.get());
@@ -188,8 +187,8 @@ auto Application::Run(const std::string& event_loop_name, const std::string& end
     this->Exit();
   };
   management_server_ = std::make_unique<management::ManagementServer>(
-      management_socket_.get(), joint_geometry_provider_.get(), activity_status_.get(),
-      calibration_manager_v2_.get(), weld_control_.get(), shutdown_handler);
+      management_socket_.get(), joint_geometry_provider_.get(), activity_status_.get(), calibration_manager_v2_.get(),
+      weld_control_.get(), shutdown_handler);
 
   coordinates_translator_->AddObserver(weld_control_.get());
   scanner_client_->AddObserver(weld_control_.get());
