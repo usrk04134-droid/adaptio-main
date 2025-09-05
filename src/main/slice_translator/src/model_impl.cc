@@ -156,14 +156,37 @@ LOG_DEBUG("projection circle: r={:.6f}, center=({:.6f}, {:.6f}, {:.6f}), n=({:.6
 
 auto ModelImpl::RotateToPlane(const Circle3d& projection_circle, Plane3d& target_plane) const -> Point3d {
   std::vector<Point3d> intersection_points = projection_circle.Intersect(target_plane);
-  LOG_DEBUG("found {} intersection point(s)", intersection_points.size());
+  // Filter out any invalid points (NaNs/Infs) defensively
+  std::vector<Point3d> valid_points;
+  valid_points.reserve(intersection_points.size());
   for (std::size_t i = 0; i < intersection_points.size(); ++i) {
-    const auto &pt = intersection_points[i];
-    LOG_DEBUG("intersection_points[{}]: ({:.6f}, {:.6f}, {:.6f}), ref={}",
-            i, pt.GetX(), pt.GetY(), pt.GetZ(),
-            static_cast<int>(pt.GetRefSystem()));
+    const auto& pt = intersection_points[i];
+    const double x = pt.GetX();
+    const double y = pt.GetY();
+    const double z = pt.GetZ();
+    if (std::isfinite(x) && std::isfinite(y) && std::isfinite(z)) {
+      valid_points.push_back(pt);
+      LOG_DEBUG("intersection_points[{}]: ({:.6f}, {:.6f}, {:.6f}), ref={}", i, x, y, z,
+                static_cast<int>(pt.GetRefSystem()));
+    } else {
+      LOG_ERROR("Dropping invalid intersection point[{}]: ({}, {}, {}), ref={}", i, x, y, z,
+                static_cast<int>(pt.GetRefSystem()));
+    }
   }
-  Point3d int_point                        = FindClosestPoint(intersection_points, {0, 0, 0, CoordinateSystem::MACS});
+  if (valid_points.empty()) {
+    // Fallback: return orthogonal projection of origin onto target plane
+    Eigen::Vector3d n = target_plane.GetNormal();
+    if (n.norm() < 1e-12 || !std::isfinite(n.norm())) {
+      n = {0.0, 1.0, 0.0};
+    } else {
+      n.normalize();
+    }
+    Eigen::Vector3d p0   = target_plane.GetPointInPlane().ToVec();
+    Eigen::Vector3d proj = p0 - n.dot(p0) * n;
+    LOG_ERROR("No valid circle-plane intersection; using plane origin projection fallback");
+    return {proj(0), proj(1), proj(2), target_plane.GetRefSystem()};
+  }
+  Point3d int_point = FindClosestPoint(valid_points, {0, 0, 0, CoordinateSystem::MACS});
   return int_point;
 }
 
