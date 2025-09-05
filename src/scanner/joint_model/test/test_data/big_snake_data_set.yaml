@@ -1,0 +1,38 @@
+# Minimal dataset for BigSnake doctest. Extend this file or override path with ADAPTIO_BIGSNAKE_DATASET.
+header:
+  camera_calibration: ./assets/scanner_calibration/HIL.yaml
+  fov:
+    width: 3500
+    height: 2500
+    offset_x: 312
+    offset_y: 0
+  joint:
+    upper_joint_width: 50.0
+    left_max_surface_angle: 0.34906585
+    right_max_surface_angle: 0.34906585
+    left_joint_angle: 0.1396
+    right_joint_angle: 0.1396
+    groove_depth: 28.0
+    upper_joint_width_tolerance: 7.0
+    surface_angle_tolerance: 0.174532925
+    groove_angle_tolerance: 0.157079633
+    offset_distance: 3.0
+  scanner_filtering:
+    gray_minimum_top: 48
+    gray_minimum_wall: 16
+    gray_minimum_bottom: 48
+  tolerance:
+    abw_xy: 0.001
+
+data:
+  - image: ./src/scanner/joint_model/test/test_data/1755001276997.tiff
+    # Optional expected points annotation; leave commented or fill in values from annotated dataset
+    # expected:
+    #   ABWPoints:
+    #     - {x: 0.0610796, y: -0.280483}
+    #     - {x: 0.0, y: 0.0}
+    #     - {x: 0.0, y: 0.0}
+    #     - {x: 0.0, y: 0.0}
+    #     - {x: 0.0, y: 0.0}
+    #     - {x: 0.0892176, y: -0.28038}
+    #     - {x: 0.0892176, y: -0.28038}
