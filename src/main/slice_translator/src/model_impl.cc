@@ -132,7 +132,17 @@ auto ModelImpl::CreateProjectionCircle(const common::Vector3D& rot_center,
                                        Point3d& point_to_project) const -> Circle3d {
   // Projection/rotation entities
   Vector3d calib_rot_center_1 = CommonVector2EigenVector(rot_center);
-  Vector3d n_circle_1         = CommonVector2EigenVector(weld_object_rotation_axis).normalized();
+  Vector3d n_circle_1         = CommonVector2EigenVector(weld_object_rotation_axis);
+  const double axis_norm      = n_circle_1.norm();
+  LOG_DEBUG("rotation axis (raw): n=({:.6f}, {:.6f}, {:.6f}), norm={:.6e}",
+            n_circle_1(0), n_circle_1(1), n_circle_1(2), axis_norm);
+  if (axis_norm < 1e-15 || std::isnan(axis_norm)) {
+    n_circle_1 = Vector3d(1.0, 0.0, 0.0);
+    LOG_DEBUG("rotation axis invalid; falling back to X-axis");
+  } else {
+    n_circle_1.normalize();
+  }
+  LOG_DEBUG("rotation axis (used): n=({:.6f}, {:.6f}, {:.6f})", n_circle_1(0), n_circle_1(1), n_circle_1(2));
   Vector3d p_macs             = point_to_project.ToVec();
 
   // Adjusted projection circle center
