@@ -6,4 +6,5 @@ target_sources(${UNIT_TESTS_APPLICATION}
     naive_test.cc
     slice_test.cc
     snake_test.cc
+    big_snake_dataset_test.cc
 )
