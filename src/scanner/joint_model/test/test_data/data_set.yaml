@@ -1,0 +1,89 @@
+# Test data set for BigSnake::Parse() unit tests
+# This file contains expected ABW points for various test images
+# Each entry represents a test case with an image and its expected ABW points
+
+test_cases:
+  - name: "V-joint normal laser line"
+    image: "1755001276997.tiff"
+    description: "Standard V-joint with clear laser line visibility"
+    joint_properties:
+      upper_joint_width: 30.0  # mm
+      left_max_surface_angle: 10.0  # degrees
+      right_max_surface_angle: 10.0  # degrees
+      left_joint_angle: 45.0  # degrees
+      right_joint_angle: 45.0  # degrees
+      groove_depth: 15.0  # mm
+      upper_joint_width_tolerance: 7.0  # mm
+      surface_angle_tolerance: 10.0  # degrees
+      groove_angle_tolerance: 9.0  # degrees
+      offset_distance: 3.0  # mm
+    scanner_config:
+      gray_minimum_wall: 48
+      gray_minimum_groove: 16
+      gray_minimum_surface: 48
+    expected_result:
+      success: true
+      tolerance: 0.5  # mm
+      abw_points:
+        ABW0:  { x: -15.5, y: 8.2 }   # Left top edge
+        ABW1:  { x: -14.8, y: 7.5 }   # Left wall upper
+        ABW2:  { x: -13.2, y: 5.8 }   # Left wall lower
+        ABW3:  { x: -12.0, y: 4.5 }   # Bottom left
+        ABW4:  { x: 0.0, y: 0.0 }     # Bottom center (root)
+        ABW5:  { x: 12.0, y: 4.5 }    # Bottom right
+        ABW6:  { x: 13.2, y: 5.8 }    # Right wall lower
+        ABW7:  { x: 14.8, y: 7.5 }    # Right wall upper
+        ABW8:  { x: 15.5, y: 8.2 }    # Right top edge
+        ABW9:  { x: 0.0, y: 0.0 }     # Reserved
+        ABW10: { x: 0.0, y: 0.0 }     # Reserved
+        ABW11: { x: 0.0, y: 0.0 }     # Reserved
+        ABW12: { x: 0.0, y: 0.0 }     # Reserved
+        ABW13: { x: 0.0, y: 0.0 }     # Reserved
+        ABW14: { x: 0.0, y: 0.0 }     # Reserved
+
+  - name: "Dark/black image"
+    image: "1754561083373.tiff"
+    description: "Black image with no visible laser line - should fail"
+    joint_properties:
+      upper_joint_width: 30.0
+      left_max_surface_angle: 10.0
+      right_max_surface_angle: 10.0
+      left_joint_angle: 45.0
+      right_joint_angle: 45.0
+      groove_depth: 15.0
+      upper_joint_width_tolerance: 7.0
+      surface_angle_tolerance: 10.0
+      groove_angle_tolerance: 9.0
+      offset_distance: 3.0
+    scanner_config:
+      gray_minimum_wall: 48
+      gray_minimum_groove: 16
+      gray_minimum_surface: 48
+    expected_result:
+      success: false
+      error_code: "NO_LASER_STRIPE"
+      
+  # Additional test cases can be added here as more images become available
+  # Each test case should include:
+  # - image filename
+  # - joint properties
+  # - scanner configuration
+  # - expected ABW points (if successful)
+  # - tolerance for comparison
+  # - expected error code (if failure)
+
+# Camera calibration parameters used for all tests
+camera_calibration:
+  focal_length: 35.0  # mm
+  pixel_size: 0.00345  # mm/pixel
+  image_width: 4096
+  image_height: 3000
+  principal_point_x: 2048
+  principal_point_y: 1500
+  tilt_angle: 0.0  # degrees
+  rotation_angle: 0.0  # degrees
+  fov:
+    width: 3500
+    height: 2500
+    offset_x: 312
+    offset_y: 0
