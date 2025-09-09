@@ -1,0 +1,15 @@
+data:
+  - image: /workspace/src/scanner/joint_model/test/test_data/1755001276997.tiff
+    expected:
+      ABW:
+        - { x: 0.0, y: 0.0 }
+        - { x: 0.0, y: 0.0 }
+        - { x: 0.0, y: 0.0 }
+        - { x: 0.0, y: 0.0 }
+        - { x: 0.0, y: 0.0 }
+        - { x: 0.0, y: 0.0 }
+        - { x: 0.0, y: 0.0 }
+
+tolerance:
+  x_mm: 0.5
+  y_mm: 0.5
