@@ -1,0 +1,171 @@
+test_data:
+  # Test data structure for BigSnake::Parse() unit tests
+  # This mimics the original adaptio-core tests/data_set/data_set.yaml structure
+  
+  images:
+    - name: "1755001276997.tiff"
+      path: "./src/scanner/joint_model/test/test_data/1755001276997.tiff"
+      expected_abw_points:
+        # Expected ABW points for this image (x, y coordinates in mm)
+        # These would normally be annotated ground truth data
+        abw0: {x: 0.0477165, y: -0.280059}
+        abw1: {x: 0.0479091, y: -0.280061}
+        abw2: {x: 0.0481016, y: -0.280064}
+        abw3: {x: 0.0482942, y: -0.280065}
+        abw4: {x: 0.0484868, y: -0.280065}
+        abw5: {x: 0.0486793, y: -0.280058}
+        abw6: {x: 0.0488719, y: -0.280044}
+      joint_geometry:
+        upper_joint_width: 50.0
+        groove_depth: 28.0
+        left_joint_angle: 0.1396
+        right_joint_angle: 0.1396
+        left_max_surface_angle: 0.34906585
+        right_max_surface_angle: 0.34906585
+        upper_joint_width_tolerance: 7.0
+        surface_angle_tolerance: 0.174532925
+        groove_angle_tolerance: 0.13962634
+        offset_distance: 3.0
+    
+    - name: "1754561083373.tiff"
+      path: "./src/scanner/joint_model/test/test_data/1754561083373.tiff"
+      expected_abw_points:
+        # This is the black image - should fail processing
+        abw0: {x: 0.0, y: 0.0}
+        abw1: {x: 0.0, y: 0.0}
+        abw2: {x: 0.0, y: 0.0}
+        abw3: {x: 0.0, y: 0.0}
+        abw4: {x: 0.0, y: 0.0}
+        abw5: {x: 0.0, y: 0.0}
+        abw6: {x: 0.0, y: 0.0}
+      joint_geometry:
+        upper_joint_width: 50.0
+        groove_depth: 28.0
+        left_joint_angle: 0.1396
+        right_joint_angle: 0.1396
+        left_max_surface_angle: 0.34906585
+        right_max_surface_angle: 0.34906585
+        upper_joint_width_tolerance: 7.0
+        surface_angle_tolerance: 0.174532925
+        groove_angle_tolerance: 0.13962634
+        offset_distance: 3.0
+      expect_failure: true
+
+    - name: "1738232679592.tiff"
+      path: "./src/scanner/joint_model/test/test_data/1738232679592.tiff"
+      expected_abw_points:
+        # Additional test image - expected points would be annotated
+        abw0: {x: 0.045, y: -0.275}
+        abw1: {x: 0.047, y: -0.275}
+        abw2: {x: 0.049, y: -0.275}
+        abw3: {x: 0.051, y: -0.275}
+        abw4: {x: 0.053, y: -0.275}
+        abw5: {x: 0.055, y: -0.275}
+        abw6: {x: 0.057, y: -0.275}
+      joint_geometry:
+        upper_joint_width: 50.0
+        groove_depth: 28.0
+        left_joint_angle: 0.1396
+        right_joint_angle: 0.1396
+        left_max_surface_angle: 0.34906585
+        right_max_surface_angle: 0.34906585
+        upper_joint_width_tolerance: 7.0
+        surface_angle_tolerance: 0.174532925
+        groove_angle_tolerance: 0.13962634
+        offset_distance: 3.0
+
+    - name: "1738243625597.tiff"
+      path: "./src/scanner/joint_model/test/test_data/1738243625597.tiff"
+      expected_abw_points:
+        # Additional test image - expected points would be annotated
+        abw0: {x: 0.040, y: -0.270}
+        abw1: {x: 0.042, y: -0.270}
+        abw2: {x: 0.044, y: -0.270}
+        abw3: {x: 0.046, y: -0.270}
+        abw4: {x: 0.048, y: -0.270}
+        abw5: {x: 0.050, y: -0.270}
+        abw6: {x: 0.052, y: -0.270}
+      joint_geometry:
+        upper_joint_width: 50.0
+        groove_depth: 28.0
+        left_joint_angle: 0.1396
+        right_joint_angle: 0.1396
+        left_max_surface_angle: 0.34906585
+        right_max_surface_angle: 0.34906585
+        upper_joint_width_tolerance: 7.0
+        surface_angle_tolerance: 0.174532925
+        groove_angle_tolerance: 0.13962634
+        offset_distance: 3.0
+
+  scanner_configurations:
+    - name: "HIL"
+      path: "./assets/scanner_calibration/HIL.yaml"
+      config:
+        gray_minimum_wall: 16
+        gray_minimum_top: 32
+        gray_minimum_bottom: 32
+    
+    - name: "LX31624160019"
+      path: "./assets/scanner_calibration/LX31624160019.yaml"
+      config:
+        gray_minimum_wall: 16
+        gray_minimum_top: 32
+        gray_minimum_bottom: 32
+    
+    - name: "LX31624160053"
+      path: "./assets/scanner_calibration/LX31624160053.yaml"
+      config:
+        gray_minimum_wall: 16
+        gray_minimum_top: 32
+        gray_minimum_bottom: 32
+
+  test_cases:
+    # Define test cases combining images with scanner configurations
+    - image: "1755001276997.tiff"
+      scanner: "HIL"
+      tolerance: 0.001  # Tolerance for ABW point comparison in mm
+      
+    - image: "1755001276997.tiff"
+      scanner: "LX31624160019"
+      tolerance: 0.001
+      
+    - image: "1755001276997.tiff"
+      scanner: "LX31624160053"
+      tolerance: 0.001
+      
+    - image: "1754561083373.tiff"
+      scanner: "HIL"
+      expect_failure: true
+      
+    - image: "1754561083373.tiff"
+      scanner: "LX31624160019"
+      expect_failure: true
+      
+    - image: "1754561083373.tiff"
+      scanner: "LX31624160053"
+      expect_failure: true
+      
+    # Additional test images with different scanner configurations
+    - image: "1738232679592.tiff"
+      scanner: "HIL"
+      tolerance: 0.002
+      
+    - image: "1738232679592.tiff"
+      scanner: "LX31624160019"
+      tolerance: 0.002
+      
+    - image: "1738232679592.tiff"
+      scanner: "LX31624160053"
+      tolerance: 0.002
+      
+    - image: "1738243625597.tiff"
+      scanner: "HIL"
+      tolerance: 0.002
+      
+    - image: "1738243625597.tiff"
+      scanner: "LX31624160019"
+      tolerance: 0.002
+      
+    - image: "1738243625597.tiff"
+      scanner: "LX31624160053"
+      tolerance: 0.002
