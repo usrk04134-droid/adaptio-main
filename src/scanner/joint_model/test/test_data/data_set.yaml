@@ -1,0 +1,86 @@
+---
+
+# Camera calibration data (used with tag "camera")
+scanner_serial_number: 1234
+intrinsic:
+  projection_center_distance: 0.0
+  focus_distance: 3.744565963745117188e+00
+  principal_point:
+    x: 9.869480729103088379e-01
+    y: 7.230033874511718750e-01
+  pixel_pitch:
+    x: 2.74e-06
+    y: 2.74e-06
+
+  rho: 3.141447305679321289e+00
+  tau: 1.645262539386749268e-01
+  d: 6.015305519104003906e-01
+  K1: 3.780014812946319580e-03
+  K2: -1.993117621168494225e-03
+  K3: 5.228068857832113281e-07
+  P1: -1.876385213108733296e-04
+  P2: -5.847600405104458332e-04
+
+  scaling_factors:
+    w: 0.007093
+    m: 0.1
+    K1: 0.1
+    K2: 0.1
+    K3: 0.1
+    P1: 0.1
+    P2: 0.1
+
+extrinsic:
+  # Rotation matrix
+  R: !matrix
+    rows: 3
+    columns: 3
+    data: [ 9.999974673412257431e-01, 2.039705193809659024e-03, 9.512696023625968975e-04,
+            0.000000000000000000e+00, 4.226691551490259768e-01, -9.062840533108859065e-01,
+            -2.250624609754632317e-03, 9.062817580026263364e-01, 4.226680846722816187e-01]
+
+  # Translation vector
+  t: !matrix
+    rows: 3
+    columns: 1
+    data: [ 0.000000000000000000e+00, 0.000000000000000000e+00, 4.087606157143235386e-01 ]
+
+
+# Scanner filtering (used with tag "scanner")
+filtering:
+  gray_minimum_top: 32
+  gray_minimum_wall: 16
+  gray_minimum_bottom: 32
+
+
+# Joint properties (used with tag "joint")
+upper_joint_width: 30.0
+left_max_surface_angle: 0.34906585
+right_max_surface_angle: 0.34906585
+left_joint_angle: 0.5235987755982988
+right_joint_angle: 0.5235987755982988
+groove_depth: 12.0
+upper_joint_width_tolerance: 7.0
+surface_angle_tolerance: 0.174532925
+groove_angle_tolerance: 0.174532925
+offset_distance: 3.0
+
+
+# Optional FOV (used with tag "image_provider")
+image_provider:
+  fov:
+    width: 3500
+    height: 2500
+    offset_x: 312
+    offset_y: 0
+
+
+# Images base directory used by the test to resolve paths
+images_dir: ./src/scanner/joint_model/test/test_data
+
+# Dataset of images to run through BigSnake. If 'expected' is present,
+# the test will validate ABW points against it with given tolerances (meters).
+dataset:
+  - image: 1755001276997.tiff
+  - image: 1754561083373.tiff
+
