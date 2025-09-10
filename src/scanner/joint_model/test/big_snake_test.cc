@@ -184,7 +184,16 @@ TEST_SUITE("BigSnake") {
       CHECK_MESSAGE(fs::exists(image_path), "Image not found: " << image_path.string());
 
       auto camera_model = std::make_unique<TiltedPerspectiveCamera>(camera_properties);
-      BigSnake big_snake(joint_properties, scanner_cfg, std::move(camera_model));
+      // Allow per-image override of gray_minimum_wall
+      auto scanner_cfg_local = scanner_cfg;
+      try {
+        if (item["scanner"] && item["scanner"]["filtering"] && item["scanner"]["filtering"]["gray_minimum_wall"]) {
+          scanner_cfg_local.gray_minimum_wall = item["scanner"]["filtering"]["gray_minimum_wall"].as<int64_t>();
+        }
+      } catch (...) {
+        // keep defaults
+      }
+      BigSnake big_snake(joint_properties, scanner_cfg_local, std::move(camera_model));
 
       auto image_builder = scanner::image::ImageBuilder::From(image_path);
       auto maybe_image = image_builder.Finalize();
