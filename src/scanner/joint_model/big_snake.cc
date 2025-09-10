@@ -48,7 +48,45 @@ auto BigSnake::Parse(image::Image& image, std::optional<JointProfile> median_pro
 
   auto maybe_snake = Snake::FromImage(image, mask, threshold_);
   if (!maybe_snake) {
-    return std::unexpected(JointModelErrorCode::SURFACE_NOT_FOUND);
+    // Fallback 1: auto-crop horizontally around bright columns and retry
+    const auto& data = image.Data();
+    const int cols   = static_cast<int>(data.cols());
+    const int rows   = static_cast<int>(data.rows());
+    const int fallback_threshold = std::min(std::max(2 * static_cast<int>(threshold_), 32), 255);
+
+    int first_bright = -1;
+    int last_bright  = -1;
+    for (int c = 0; c < cols; c++) {
+      // Efficiently compute column max
+      uint8_t max_val = 0;
+      for (int r = 0; r < rows; r++) {
+        const uint8_t v = data(r, c);
+        if (v > max_val) {
+          max_val = v;
+          if (max_val > fallback_threshold) {
+            break;
+          }
+        }
+      }
+      if (max_val > fallback_threshold) {
+        if (first_bright < 0) {
+          first_bright = c;
+        }
+        last_bright = c;
+      }
+    }
+
+    if (first_bright >= 0 && last_bright >= 0 && last_bright - first_bright > 20) {
+      const int margin = 100;
+      const int start_col = std::max(0, first_bright - margin);
+      const int stop_col  = std::min(cols, last_bright + margin);
+      image.SetHorizontalCrop(start_col, stop_col);
+      maybe_snake = Snake::FromImage(image, mask, threshold_);
+    }
+
+    if (!maybe_snake) {
+      return std::unexpected(JointModelErrorCode::SURFACE_NOT_FOUND);
+    }
   }
   const auto& snake = maybe_snake.value();
 
@@ -64,7 +102,17 @@ auto BigSnake::Parse(image::Image& image, std::optional<JointProfile> median_pro
                                       updated_properties.has_value(), use_approximation, abw0_abw6_horizontal);
 
   if (!maybe_slice) {
-    return std::unexpected(maybe_slice.error());
+    // Fallback 2: if walls were not found (or similar), retry enabling the
+    // "updated properties" path to activate the joint standard deviation fallback.
+    auto err_code = maybe_slice.error();
+    (void)err_code;  // silence unused in release
+
+    auto retry_slice = Slice::FromSnake(snake_lpcs, current_properties, median_profile, found_out_of_spec_joint_width_,
+                                        true /*joint_properties_updated*/, use_approximation, abw0_abw6_horizontal);
+    if (!retry_slice) {
+      return std::unexpected(maybe_slice.error());
+    }
+    maybe_slice = retry_slice;
   }
 
   auto [points, num_walls, approximation_used] = maybe_slice.value();
