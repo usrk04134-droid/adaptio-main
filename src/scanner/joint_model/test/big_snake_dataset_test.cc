@@ -43,11 +43,11 @@ struct ImageCase {
 struct TestEnv {
 	JointProperties joint_properties{};
 	scanner::ScannerConfigurationData scanner_config{};
-	std::unique_ptr<TiltedPerspectiveCamera> camera_model;
+	TiltedPerspectiveCameraProperties default_camera_properties{};
 	std::vector<ImageCase> images;
 };
 
-auto MakeDefaultCamera() -> std::unique_ptr<TiltedPerspectiveCamera> {
+auto MakeDefaultCameraProperties() -> TiltedPerspectiveCameraProperties {
 	TiltedPerspectiveCameraProperties camera_properties;
 	// Default HIL-like calibration. Tests relying on exact ABW comparison should
 	// override via YAML dataset to match the original calibration.
@@ -75,7 +75,7 @@ auto MakeDefaultCamera() -> std::unique_ptr<TiltedPerspectiveCamera> {
 	camera_properties.config_calib.extrinsic.translation.col(0)
 	    << -0.04886608988697602, -0.04393368249422651, 0.37231035253911315;
 	camera_properties.config_fov = {.width = 3500, .offset_x = 312, .height = 2500, .offset_y = 0};
-	return std::make_unique<TiltedPerspectiveCamera>(camera_properties);
+	return camera_properties;
 }
 
 auto SetupEnv() -> TestEnv {
@@ -91,8 +91,8 @@ auto SetupEnv() -> TestEnv {
 	                        .surface_angle_tolerance     = 10.0 * M_PI / 180.0,
 	                        .groove_angle_tolerance      = 9.0 * M_PI / 180.0,
 	                        .offset_distance             = 3.0};
-	env.scanner_config   = {.gray_minimum_top = 48, .gray_minimum_wall = 16, .gray_minimum_bottom = 48};
-	env.camera_model     = MakeDefaultCamera();
+	env.scanner_config           = {.gray_minimum_top = 48, .gray_minimum_wall = 16, .gray_minimum_bottom = 48};
+	env.default_camera_properties = MakeDefaultCameraProperties();
 
 	// Discover bundled test images
 	auto base_dir = std::filesystem::path("./src/scanner/joint_model/test/test_data");
@@ -158,8 +158,8 @@ TEST_SUITE("BigSnake dataset") {
 		auto env = SetupEnv();
 
 		// Build list of camera calibrations to test: default + scanner_calibration folder
-		std::vector<std::pair<std::string, std::unique_ptr<TiltedPerspectiveCamera>>> camera_models;
-		camera_models.emplace_back(std::make_pair(std::string("default"), std::make_unique<TiltedPerspectiveCamera>(*env.camera_model)));
+		std::vector<std::pair<std::string, TiltedPerspectiveCameraProperties>> camera_props;
+		camera_props.emplace_back(std::make_pair(std::string("default"), env.default_camera_properties));
 
 		const auto calib_dir = std::filesystem::path("./assets/scanner_calibration");
 		if (std::filesystem::exists(calib_dir) && std::filesystem::is_directory(calib_dir)) {
@@ -172,15 +172,15 @@ TEST_SUITE("BigSnake dataset") {
 				scanner::image::TiltedPerspectiveCameraProperties props = scanner::image::TiltedPerspectiveCameraProperties::FromUnorderedMap(map);
 				// Use standard FOV
 				props.config_fov = {.width = 3500, .offset_x = 312, .height = 2500, .offset_y = 0};
-				camera_models.emplace_back(std::make_pair(entry.path().filename().string(), std::make_unique<TiltedPerspectiveCamera>(props)));
+				camera_props.emplace_back(std::make_pair(entry.path().filename().string(), props));
 			}
 		}
 
 		for (const auto &img_case : env.images) {
 			SUBCASE(img_case.name.c_str()) {
-				for (auto &named_cam : camera_models) {
+				for (auto &named_cam : camera_props) {
 					SUBCASE(named_cam.first.c_str()) {
-						auto big_snake = BigSnake(env.joint_properties, env.scanner_config, std::make_unique<TiltedPerspectiveCamera>(*named_cam.second));
+						auto big_snake = BigSnake(env.joint_properties, env.scanner_config, std::make_unique<TiltedPerspectiveCamera>(named_cam.second));
 
 						auto grayscale_image = cv::imread(img_case.path.string(), cv::IMREAD_GRAYSCALE);
 						REQUIRE(grayscale_image.data != nullptr);
