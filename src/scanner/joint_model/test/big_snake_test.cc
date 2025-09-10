@@ -1,4 +1,4 @@
-THIS SHOULD BE A LINTER ERROR#include <filesystem>
+#include <filesystem>
 #include <cmath>
 #include <optional>
 #include <string>
@@ -105,10 +105,11 @@ TEST_SUITE("BigSnake") {
     auto joint_properties = ReadJointPropertiesFromYaml(dataset_yaml_path);
 
     YAML::Node doc = YAML::LoadFile(dataset_yaml_path);
-    CHECK_MESSAGE(doc, "Failed to parse dataset YAML");
+    REQUIRE_MESSAGE(doc.IsDefined(), "Failed to parse dataset YAML");
     auto base_dir = ReadImagesBaseDir(doc);
 
-    REQUIRE_MESSAGE(doc["dataset"] && doc["dataset"].IsSequence(), "Missing 'dataset' list in dataset YAML");
+    REQUIRE_MESSAGE(doc["dataset"].IsDefined(), "Missing 'dataset' in dataset YAML");
+    REQUIRE_MESSAGE(doc["dataset"].IsSequence(), "'dataset' must be a sequence in dataset YAML");
     auto dataset = doc["dataset"];
 
     for (std::size_t i = 0; i < dataset.size(); ++i) {
@@ -130,9 +131,8 @@ TEST_SUITE("BigSnake") {
       REQUIRE_MESSAGE(result.has_value(), "BigSnake parsing failed for image: " << image_path.string());
 
       if (NodeHasExpectedAbw(item)) {
-        auto [profile, /*snake_lpcs*/ std::ignore, /*processing_ms*/ std::ignore, /*num_walls*/ std::ignore] =
-            result.value();
-
+        const auto& result_tuple = result.value();
+        const auto& profile = std::get<0>(result_tuple);
         auto expected_abw = item["expected"]["abw"];
         // Allow small numeric tolerance (meters)
         const double tol_x = (item["expected"]["tolerance_x"]) ? item["expected"]["tolerance_x"].as<double>() : 1e-3;
