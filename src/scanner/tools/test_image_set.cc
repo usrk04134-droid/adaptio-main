@@ -194,6 +194,14 @@ auto main(int argc, char* argv[]) -> int {
   }
   auto scanner_cfg = maybe_scanner_cfg.value()->AsUnorderedMap();
 
+  // Log scanner configuration at debug level
+  auto scanner_cfg_yaml = maybe_scanner_cfg.value()->ToString(scanner_cfg);
+  if (scanner_cfg_yaml.has_value()) {
+    LOG_DEBUG("Scanner configuration:\n{}", scanner_cfg_yaml.value());
+  } else {
+    LOG_DEBUG("Failed to stringify scanner configuration: {}", scanner_cfg_yaml.error().to_string());
+  }
+
   std::unique_ptr<scanner::image_provider::ImageProvider> image_provider;
 
   auto number_images = 0;
