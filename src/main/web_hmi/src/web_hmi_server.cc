@@ -35,7 +35,8 @@ using web_hmi::WebHmiServer;
 WebHmiServer::WebHmiServer(zevs::CoreSocket* in_socket, zevs::CoreSocket* out_socket,
                            joint_geometry::JointGeometryProvider* joint_geometry_provider,
                            kinematics::KinematicsClient* kinematics_client,
-                           coordination::ActivityStatus* activity_status)
+                           coordination::ActivityStatus* activity_status,
+                           prometheus::Registry* registry)
     : in_socket_(in_socket),
       out_socket_(out_socket),
       kinematics_client_(kinematics_client),
@@ -43,7 +44,7 @@ WebHmiServer::WebHmiServer(zevs::CoreSocket* in_socket, zevs::CoreSocket* out_so
   LOG_DEBUG("Starting WebHmiServer");
   auto handler = [this](zevs::MessagePtr msg) { this->OnMessage(std::move(msg)); };
   in_socket_->SetHandler(handler);
-
+  SetupMetrics(registry);
 }
 
 auto WebHmiServer::CheckSubscribers(std::string const& topic, nlohmann::json const& payload) -> bool {
@@ -122,6 +123,58 @@ void WebHmiServer::Receive(const macs::Slice& data, const lpcs::Slice& /*scanner
   // could be an empty optional
   groove_ = data.groove;
   LOG_DEBUG("GetGroove: groove_ available: {}", groove_->ToString());
+  if (groove_) {
+    UpdateJointMetrics(*groove_);
+  }
+}
+
+void WebHmiServer::SetupMetrics(prometheus::Registry* registry) {
+  if (registry == nullptr) {
+    return;
+  }
+
+  auto& gauge_family = prometheus::BuildGauge()
+                           .Name("adaptio_joint_characteristic")
+                           .Help("Joint characteristics derived from ABW points (mm, rad, mm2)")
+                           .Register(*registry);
+
+  metrics_.top_width_mm = &gauge_family.Add({{"name", "top_width_mm"}});
+  metrics_.bottom_width_mm = &gauge_family.Add({{"name", "bottom_width_mm"}});
+  metrics_.left_depth_mm = &gauge_family.Add({{"name", "left_depth_mm"}});
+  metrics_.right_depth_mm = &gauge_family.Add({{"name", "right_depth_mm"}});
+  metrics_.avg_depth_mm = &gauge_family.Add({{"name", "avg_depth_mm"}});
+  metrics_.top_edge_vertical_diff_mm = &gauge_family.Add({{"name", "top_edge_vertical_diff_mm"}});
+  metrics_.area_mm2 = &gauge_family.Add({{"name", "area_mm2"}});
+  metrics_.left_wall_angle_rad = &gauge_family.Add({{"name", "left_wall_angle_rad"}});
+  metrics_.right_wall_angle_rad = &gauge_family.Add({{"name", "right_wall_angle_rad"}});
+}
+
+void WebHmiServer::UpdateJointMetrics(const macs::Groove& groove) {
+  if (!metrics_.top_width_mm) {
+    return;
+  }
+
+  const double top_width = groove.TopWidth();
+  const double bottom_width = groove.BottomWidth();
+  const double left_depth = groove.LeftDepth();
+  const double right_depth = groove.RightDepth();
+  const double avg_depth = groove.AvgDepth();
+  const double area = groove.Area();
+  const double left_angle = groove.LeftWallAngle();
+  const double right_angle = groove.RightWallAngle();
+
+  // Top edge vertical difference: ABW0 - ABW6 vertical
+  const double top_edge_vertical_diff = groove[macs::ABW_UPPER_LEFT].vertical - groove[macs::ABW_UPPER_RIGHT].vertical;
+
+  metrics_.top_width_mm->Set(top_width);
+  metrics_.bottom_width_mm->Set(bottom_width);
+  metrics_.left_depth_mm->Set(left_depth);
+  metrics_.right_depth_mm->Set(right_depth);
+  metrics_.avg_depth_mm->Set(avg_depth);
+  metrics_.top_edge_vertical_diff_mm->Set(top_edge_vertical_diff);
+  metrics_.area_mm2->Set(area);
+  metrics_.left_wall_angle_rad->Set(left_angle);
+  metrics_.right_wall_angle_rad->Set(right_angle);
 }
 
 void WebHmiServer::SubscribePattern(std::regex const& pattern, OnRequest on_request) {
