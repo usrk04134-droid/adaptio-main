@@ -270,6 +270,49 @@ void WeldControlImpl::SetupMetrics(prometheus::Registry* registry) {
                                                       .Register(*registry)
                                                       .Add({});
   }
+
+  {
+    metrics_.joint.top_width_mm = &prometheus::BuildGauge()
+                                       .Name("weld_control_joint_top_width_mm")
+                                       .Help("Joint top width (absolute) in mm.")
+                                       .Register(*registry)
+                                       .Add({});
+    metrics_.joint.bottom_width_mm = &prometheus::BuildGauge()
+                                          .Name("weld_control_joint_bottom_width_mm")
+                                          .Help("Joint bottom width (absolute) in mm.")
+                                          .Register(*registry)
+                                          .Add({});
+    metrics_.joint.left_depth_mm = &prometheus::BuildGauge()
+                                        .Name("weld_control_joint_left_depth_mm")
+                                        .Help("Joint left wall depth in mm.")
+                                        .Register(*registry)
+                                        .Add({});
+    metrics_.joint.right_depth_mm = &prometheus::BuildGauge()
+                                         .Name("weld_control_joint_right_depth_mm")
+                                         .Help("Joint right wall depth in mm.")
+                                         .Register(*registry)
+                                         .Add({});
+    metrics_.joint.avg_depth_mm = &prometheus::BuildGauge()
+                                       .Name("weld_control_joint_avg_depth_mm")
+                                       .Help("Joint average depth in mm.")
+                                       .Register(*registry)
+                                       .Add({});
+    metrics_.joint.top_height_diff_mm = &prometheus::BuildGauge()
+                                             .Name("weld_control_joint_top_height_diff_mm")
+                                             .Help("Vertical height difference (left - right) at top in mm.")
+                                             .Register(*registry)
+                                             .Add({});
+    metrics_.joint.top_slope = &prometheus::BuildGauge()
+                                    .Name("weld_control_joint_top_slope")
+                                    .Help("Slope of joint top (delta_z/delta_x).")
+                                    .Register(*registry)
+                                    .Add({});
+    metrics_.joint.bottom_slope = &prometheus::BuildGauge()
+                                       .Name("weld_control_joint_bottom_slope")
+                                       .Help("Slope of joint bottom (delta_z/delta_x).")
+                                       .Register(*registry)
+                                       .Add({});
+  }
 }
 
 void WeldControlImpl::UpdateBeadControlParameters() {
@@ -731,6 +774,25 @@ void WeldControlImpl::UpdateConfidentSlice() {
       .abw0_horizontal = lpcs_groove ? lpcs_groove.value()[macs::ABW_UPPER_LEFT].x : 0.0,
       .abw6_horizontal = lpcs_groove ? lpcs_groove.value()[macs::ABW_UPPER_RIGHT].x : 0.0,
   });
+
+  // Update joint characteristic gauges
+  const double top_width_abs     = std::fabs(groove.TopWidth());
+  const double bottom_width_abs  = std::fabs(groove.BottomWidth());
+  const double left_depth_abs    = std::fabs(groove.LeftDepth());
+  const double right_depth_abs   = std::fabs(groove.RightDepth());
+  const double avg_depth_abs     = 0.5 * (left_depth_abs + right_depth_abs);
+  const double top_height_diff   = groove[macs::ABW_UPPER_LEFT].vertical - groove[macs::ABW_UPPER_RIGHT].vertical;
+  const double top_slope         = groove.TopSlope();
+  const double bottom_slope      = groove.BottomSlope();
+
+  metrics_.joint.top_width_mm->Set(top_width_abs);
+  metrics_.joint.bottom_width_mm->Set(bottom_width_abs);
+  metrics_.joint.left_depth_mm->Set(left_depth_abs);
+  metrics_.joint.right_depth_mm->Set(right_depth_abs);
+  metrics_.joint.avg_depth_mm->Set(avg_depth_abs);
+  metrics_.joint.top_height_diff_mm->Set(top_height_diff);
+  metrics_.joint.top_slope->Set(top_slope);
+  metrics_.joint.bottom_slope->Set(bottom_slope);
 
   if (lpcs_groove.has_value()) {
     metrics_.confident_slice.ok->Increment();

@@ -183,6 +183,16 @@ class WeldControlImpl : public WeldControl,
       prometheus::Counter* translation_failed;
     } confident_slice;
     prometheus::Gauge* confident_slice_buffer_fill_ratio;
+    struct {
+      prometheus::Gauge* top_width_mm;
+      prometheus::Gauge* bottom_width_mm;
+      prometheus::Gauge* left_depth_mm;
+      prometheus::Gauge* right_depth_mm;
+      prometheus::Gauge* avg_depth_mm;
+      prometheus::Gauge* top_height_diff_mm;
+      prometheus::Gauge* top_slope;
+      prometheus::Gauge* bottom_slope;
+    } joint;
   } metrics_;
 
   /* WebHMI */
