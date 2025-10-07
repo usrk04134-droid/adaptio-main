@@ -10,7 +10,7 @@
 #include "bead_control/src/weld_position_data_storage.h"
 #include "common/logging/application_log.h"
 #include "macs/macs_groove.h"
-#include "macs/macs_math.h"
+#include "common/groove/math.h"
 #include "macs/macs_point.h"
 
 namespace {
@@ -47,7 +47,7 @@ auto BeadCalc::MeanLayerArea(const macs::Groove& groove, double left_bead_area, 
 
   LOG_INFO("Left bead height: {:.5f} Right bead height: {:.5f}", left_bead_height, right_bead_height);
 
-  return groove::PolygonArea(
+  return common::groove::PolygonArea(
       {WallCoordinate(groove[macs::ABW_LOWER_LEFT], groove[macs::ABW_UPPER_LEFT], left_bead_height),
        groove[macs::ABW_LOWER_LEFT], groove[macs::ABW_LOWER_RIGHT],
        WallCoordinate(groove[macs::ABW_LOWER_RIGHT], groove[macs::ABW_UPPER_RIGHT], right_bead_height)});
@@ -151,7 +151,7 @@ auto BeadCalc::BeadSliceAreaRatio(const macs::Groove& groove, int bead, int bead
   }
 
   auto const groove_area     = groove.Area();
-  auto const bead_slice_area = groove::PolygonArea(vec);
+  auto const bead_slice_area = common::groove::PolygonArea(vec);
 
   /*LOG_TRACE("area groove/slice: {} / {} ({:.2f}%)", groove_area, bead_slice_area,*/
   /*          bead_slice_area / groove_area * 100. * fbeads);*/
