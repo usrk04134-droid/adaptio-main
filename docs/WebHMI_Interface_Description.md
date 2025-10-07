@@ -35,6 +35,19 @@ The WebHMI Interface is a set of json messages distinguished by the "name" attri
 
 ```json
 {"name":"GetAdaptioVersionRsp","payload":{"version":"0.1.8"}}
+## Metrics
+
+Prometheus endpoint exposes runtime gauges and counters. Joint characteristics are available as gauges:
+
+- weld_control_joint_top_width_mm
+- weld_control_joint_bottom_width_mm
+- weld_control_joint_left_depth_mm
+- weld_control_joint_right_depth_mm
+- weld_control_joint_avg_depth_mm
+- weld_control_joint_top_height_diff_mm
+- weld_control_joint_top_slope
+- weld_control_joint_bottom_slope
+
 ```
 
 ## JointGeometry
