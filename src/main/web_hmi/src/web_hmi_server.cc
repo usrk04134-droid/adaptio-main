@@ -166,6 +166,13 @@ void WebHmiServer::UpdateJointMetrics(const macs::Groove& groove) {
   // Top edge vertical difference: ABW0 - ABW6 vertical
   const double top_edge_vertical_diff = groove[macs::ABW_UPPER_LEFT].vertical - groove[macs::ABW_UPPER_RIGHT].vertical;
 
+  LOG_DEBUG(
+      "Groove metrics: top_width_mm={:.3f} bottom_width_mm={:.3f} left_depth_mm={:.3f} right_depth_mm={:.3f} "
+      "avg_depth_mm={:.3f} top_edge_vertical_diff_mm={:.3f} area_mm2={:.3f} left_wall_angle_rad={:.3f} "
+      "right_wall_angle_rad={:.3f}",
+      top_width, bottom_width, left_depth, right_depth, avg_depth, top_edge_vertical_diff, area, left_angle,
+      right_angle);
+
   metrics_.top_width_mm->Set(top_width);
   metrics_.bottom_width_mm->Set(bottom_width);
   metrics_.left_depth_mm->Set(left_depth);
