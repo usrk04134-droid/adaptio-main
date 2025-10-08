@@ -2,6 +2,8 @@
 
 #include <memory>
 #include <regex>
+#include <prometheus/gauge.h>
+#include <prometheus/registry.h>
 
 #include "../web_hmi.h"
 #include "calibration/calibration_manager.h"
@@ -20,7 +22,8 @@ class WebHmiServer : public slice_translator::SliceObserver, public WebHmi {
  public:
   WebHmiServer(zevs::CoreSocket* in_socket, zevs::CoreSocket* out_socket,
                joint_geometry::JointGeometryProvider* joint_geometry_provider,
-               kinematics::KinematicsClient* kinematics_client, coordination::ActivityStatus* activity_status);
+               kinematics::KinematicsClient* kinematics_client, coordination::ActivityStatus* activity_status,
+               prometheus::Registry* registry);
 
   void OnMessage(zevs::MessagePtr message);
 
@@ -37,6 +40,9 @@ class WebHmiServer : public slice_translator::SliceObserver, public WebHmi {
  private:
   void GetSlidesPositionRsp(double horizontal, double vertical);
 
+  void SetupMetrics(prometheus::Registry* registry);
+  void UpdateJointMetrics(const macs::Groove& groove);
+
   zevs::CoreSocket* in_socket_;
   zevs::CoreSocket* out_socket_;
   kinematics::KinematicsClient* kinematics_client_;
@@ -44,6 +50,18 @@ class WebHmiServer : public slice_translator::SliceObserver, public WebHmi {
 
   // Last groove estimate
   std::optional<macs::Groove> groove_;
+
+  struct {
+    prometheus::Gauge* top_width_mm{nullptr};
+    prometheus::Gauge* bottom_width_mm{nullptr};
+    prometheus::Gauge* left_depth_mm{nullptr};
+    prometheus::Gauge* right_depth_mm{nullptr};
+    prometheus::Gauge* avg_depth_mm{nullptr};
+    prometheus::Gauge* top_edge_vertical_diff_mm{nullptr};
+    prometheus::Gauge* area_mm2{nullptr};
+    prometheus::Gauge* left_wall_angle_rad{nullptr};
+    prometheus::Gauge* right_wall_angle_rad{nullptr};
+  } metrics_;
 
   auto CheckSubscribers(std::string const& topic, nlohmann::json const& payload) -> bool;
 

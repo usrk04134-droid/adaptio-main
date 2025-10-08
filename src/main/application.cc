@@ -116,7 +116,8 @@ auto Application::Run(const std::string& event_loop_name, const std::string& end
   // Service Mode
   web_hmi_server_ = std::make_unique<web_hmi::WebHmiServer>(web_hmi_in_socket_.get(), web_hmi_out_socket_.get(),
                                                             joint_geometry_provider_.get(),
-                                                            kinematics_client_.get(), activity_status_.get());
+                                                            kinematics_client_.get(), activity_status_.get(),
+                                                            registry_);
 
   // Image logging manager
   auto image_logger_config = configuration_->GetImageLoggingConfiguration();

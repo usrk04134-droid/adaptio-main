@@ -307,6 +307,21 @@ Horizontal and vertical position (in mm)
 {"name":"GetSlidesPositionRsp","payload":{"horizontal":5.0,"vertical":10.0}}
 ```
 
+## Joint Characteristics (Metrics)
+
+Joint characteristics derived from the ABW points are exported as Prometheus gauges under the metric family
+`adaptio_joint_characteristic{name="<metric>"}`. These update continuously during tracking and can be visualized in the Adaptio dashboard.
+
+- `top_width_mm`: distance between ABW0 and ABW6 along horizontal (mm)
+- `bottom_width_mm`: distance between ABW1 and ABW5 along horizontal (mm)
+- `left_depth_mm`: vertical delta between ABW0 and ABW1 (mm)
+- `right_depth_mm`: vertical delta between ABW6 and ABW5 (mm)
+- `avg_depth_mm`: mean of left/right depth (mm)
+- `top_edge_vertical_diff_mm`: ABW0.vertical - ABW6.vertical (mm)
+- `area_mm2`: polygon area of groove (mm^2)
+- `left_wall_angle_rad`: left wall angle (rad)
+- `right_wall_angle_rad`: right wall angle (rad)
+
 ## ServiceModeTracking
 
 Joint tracking can be started as a service mode function. This is mainly for test purposes.

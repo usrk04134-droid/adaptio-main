@@ -25,13 +25,17 @@ TEST_SUITE("Metrics") {
     // Collect metrics and check counter
     auto collected = fixture.Sut()->Registry()->Collect();
     double laser_torch_calibration_start_count{};
+    bool found_joint_characteristics_family = false;
     for (auto const& metric_family : collected) {
       if (metric_family.name == "adaptio_laser_torch_calibration_starts_total") {
         laser_torch_calibration_start_count = metric_family.metric[0].counter.value;
-        break;
+      }
+      if (metric_family.name == "adaptio_joint_characteristic") {
+        found_joint_characteristics_family = true;
       }
     }
     CHECK_EQ(1.0, laser_torch_calibration_start_count);
+    CHECK(found_joint_characteristics_family);
   }
 }
 // NOLINTEND(*-magic-numbers, *-optional-access, hicpp-signed-bitwise)
