@@ -220,6 +220,7 @@ class WeldControlImpl : public WeldControl,
   void ChangeState(State new_state);
   auto CheckHandover() -> bool;
   auto UpdateSliceConfidence() -> bool;
+  void ResetGrooveMetrics();
 };
 
 }  // namespace weld_control

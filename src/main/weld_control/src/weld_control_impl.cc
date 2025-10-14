@@ -535,6 +535,21 @@ void WeldControlImpl::LogModeChange() {
   weld_logger_.Log(logdata.dump());
 }
 
+void WeldControlImpl::ResetGrooveMetrics() {
+  if (metrics_.groove.top_width_mm) {
+    metrics_.groove.top_width_mm->Set(0.0);
+  }
+  if (metrics_.groove.bottom_width_mm) {
+    metrics_.groove.bottom_width_mm->Set(0.0);
+  }
+  if (metrics_.groove.area_mm2) {
+    metrics_.groove.area_mm2->Set(0.0);
+  }
+  if (metrics_.groove.top_height_diff_mm) {
+    metrics_.groove.top_height_diff_mm->Set(0.0);
+  }
+}
+
 auto WeldControlImpl::JTReady() const -> bool {
   auto const weld_axis_ok   = weld_axis_state_ == kinematics::State::HOMED;
   auto const edge_sensor_ok = settings_.UseEdgeSensor() ? edge_state_ == kinematics::EdgeState::AVAILABLE : true;
@@ -1273,6 +1288,9 @@ void WeldControlImpl::JointTrackingStart(const joint_geometry::JointGeometry& jo
   tracking_mode_     = tracking_mode;
   horizontal_offset_ = horizontal_offset;
   vertical_offset_   = vertical_offset;
+
+  // Reset groove metrics at the start of JT to begin fresh collection
+  ResetGrooveMetrics();
 
   ChangeMode(Mode::JOINT_TRACKING);
   LogData("adaptio-state-change");
