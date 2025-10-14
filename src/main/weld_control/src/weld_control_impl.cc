@@ -270,6 +270,32 @@ void WeldControlImpl::SetupMetrics(prometheus::Registry* registry) {
                                                       .Register(*registry)
                                                       .Add({});
   }
+
+  {
+    auto& groove_top_width_family = prometheus::BuildGauge()
+                                        .Name("weld_control_groove_top_width_mm")
+                                        .Help("Groove top width (mm) from machine data")
+                                        .Register(*registry);
+    metrics_.groove.top_width_mm = &groove_top_width_family.Add({});
+
+    auto& groove_bottom_width_family = prometheus::BuildGauge()
+                                           .Name("weld_control_groove_bottom_width_mm")
+                                           .Help("Groove bottom width (mm) from machine data")
+                                           .Register(*registry);
+    metrics_.groove.bottom_width_mm = &groove_bottom_width_family.Add({});
+
+    auto& groove_area_family = prometheus::BuildGauge()
+                                   .Name("weld_control_groove_area_mm2")
+                                   .Help("Groove area (mm^2) from machine data")
+                                   .Register(*registry);
+    metrics_.groove.area_mm2 = &groove_area_family.Add({});
+
+    auto& groove_top_height_diff_family = prometheus::BuildGauge()
+                                              .Name("weld_control_groove_top_height_diff_mm")
+                                              .Help("Groove top height difference (mm) from machine data")
+                                              .Register(*registry);
+    metrics_.groove.top_height_diff_mm = &groove_top_height_diff_family.Add({});
+  }
 }
 
 void WeldControlImpl::UpdateBeadControlParameters() {
@@ -507,6 +533,21 @@ void WeldControlImpl::LogModeChange() {
   };
 
   weld_logger_.Log(logdata.dump());
+}
+
+void WeldControlImpl::ResetGrooveMetrics() {
+  if (metrics_.groove.top_width_mm) {
+    metrics_.groove.top_width_mm->Set(0.0);
+  }
+  if (metrics_.groove.bottom_width_mm) {
+    metrics_.groove.bottom_width_mm->Set(0.0);
+  }
+  if (metrics_.groove.area_mm2) {
+    metrics_.groove.area_mm2->Set(0.0);
+  }
+  if (metrics_.groove.top_height_diff_mm) {
+    metrics_.groove.top_height_diff_mm->Set(0.0);
+  }
 }
 
 auto WeldControlImpl::JTReady() const -> bool {
@@ -1152,6 +1193,28 @@ void WeldControlImpl::Receive(const macs::Slice& machine_data, const lpcs::Slice
   cached_torch_to_scanner_angle_ = angle_from_torch_to_scanner;
   cached_groove_area_            = scanner_data.groove_area;
 
+  // Update groove gauges from machine_data
+  if (machine_data.groove.has_value()) {
+    const auto& groove = machine_data.groove.value();
+    const double top_width_mm        = groove.TopWidth();
+    const double bottom_width_mm     = groove.BottomWidth();
+    const double area_mm2            = groove.Area();
+    const double top_height_diff_mm  = groove[macs::ABW_UPPER_LEFT].vertical - groove[macs::ABW_UPPER_RIGHT].vertical;
+
+    if (metrics_.groove.top_width_mm) {
+      metrics_.groove.top_width_mm->Set(top_width_mm);
+    }
+    if (metrics_.groove.bottom_width_mm) {
+      metrics_.groove.bottom_width_mm->Set(bottom_width_mm);
+    }
+    if (metrics_.groove.area_mm2) {
+      metrics_.groove.area_mm2->Set(area_mm2);
+    }
+    if (metrics_.groove.top_height_diff_mm) {
+      metrics_.groove.top_height_diff_mm->Set(top_height_diff_mm);
+    }
+  }
+
   auto on_weld_axis_response = [this](std::uint64_t /*time_stamp*/, double position, double ang_velocity,
                                       double radius) {
     cached_weld_axis_position_     = position;
@@ -1225,6 +1288,9 @@ void WeldControlImpl::JointTrackingStart(const joint_geometry::JointGeometry& jo
   tracking_mode_     = tracking_mode;
   horizontal_offset_ = horizontal_offset;
   vertical_offset_   = vertical_offset;
+
+  // Reset groove metrics at the start of JT to begin fresh collection
+  ResetGrooveMetrics();
 
   ChangeMode(Mode::JOINT_TRACKING);
   LogData("adaptio-state-change");
