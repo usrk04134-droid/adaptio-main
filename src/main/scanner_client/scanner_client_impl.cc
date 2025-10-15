@@ -167,6 +167,17 @@ void ScannerClientImpl::OnSliceData(common::msg::scanner::SliceData slice_data) 
       this->OnGetSlidesPosition(time_stamp, horizontal, vertical);
     };
 
+    // Record and log latency: from camera capture timestamp until GetSlidesPosition is requested
+    last_slice_timestamp_           = slice_data.time_stamp;
+    last_get_position_request_time_ = std::chrono::system_clock::now();
+    try {
+      auto capture_tp = std::chrono::system_clock::time_point(std::chrono::milliseconds(slice_data.time_stamp));
+      auto now        = std::chrono::system_clock::now();
+      auto ms         = std::chrono::duration_cast<std::chrono::milliseconds>(now - capture_tp).count();
+      LOG_DEBUG("Capture-to-GetSlidesPosition latency: {} ms", ms);
+    } catch (...) {
+      // ignore
+    }
     kinematics_client_->GetSlidesPosition(slice_data.time_stamp, on_response);
   }
 }

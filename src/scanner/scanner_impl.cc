@@ -137,6 +137,14 @@ void ScannerImpl::SetupMetrics(prometheus::Registry* registry) {
                                              .Register(*registry)
                                              .Add({});
   }
+
+  {
+    metrics_.camera_fps = &prometheus::BuildGauge()
+                               .Name("scanner_camera_frames_per_second")
+                               .Help("Instantaneous camera FPS estimated from capture timestamps.")
+                               .Register(*registry)
+                               .Add({});
+  }
 }
 
 auto ScannerImpl::Start(enum ScannerSensitivity sensitivity) -> boost::outcome_v2::result<void> {
@@ -261,6 +269,49 @@ void ScannerImpl::ImageGrabbed(std::unique_ptr<image::Image> image) {
         }
       }
 
+      // Horizontal FOV width adjustment based on ABW points projected to image space
+      // Keep OffsetX fixed (calibrated); adjust only Width so the ROI extends just past ABW6 with margins
+      {
+        // Compute ABW points in image pixels (x row = 0)
+        auto maybe_img_abw = joint_model_->WorkspaceToImage(joint_model::ABWPointsToMatrix(profile.points), current_offset);
+        if (maybe_img_abw.has_value()) {
+          const auto abw_img = maybe_img_abw.value();
+          const auto min_x   = static_cast<int>(abw_img.row(0).minCoeff());
+          const auto max_x   = static_cast<int>(abw_img.row(0).maxCoeff());
+
+          // Determine current and desired width
+          const int current_width = image_provider_->GetHorizontalFOVWidth() > 0
+                                        ? image_provider_->GetHorizontalFOVWidth()
+                                        : image->Data().cols();
+          const int max_width_cap = image_provider_->GetMaxHorizontalFOVWidth() > 0
+                                        ? image_provider_->GetMaxHorizontalFOVWidth()
+                                        : image->Data().cols();
+
+          const bool fov_small_but_covers_joint_x =
+              current_width == MINIMUM_FOV_WIDTH &&
+              (max_x - min_x + 2 * WINDOW_MARGIN_X) <= MINIMUM_FOV_WIDTH &&
+              (min_x >= WINDOW_MARGIN_X) && (max_x + WINDOW_MARGIN_X <= current_width);
+
+          if (!fov_small_but_covers_joint_x) {
+            int desired_width = std::clamp(max_x + WINDOW_MARGIN_X, MINIMUM_FOV_WIDTH, max_width_cap);
+
+            const auto pending = dont_allow_horizontal_fov_change_until_new_width_received;
+            const bool allow   = pending.transform([&](int requested) { return requested == current_width; }).value_or(true);
+
+            if (allow && std::abs(desired_width - current_width) > MOVE_MARGIN_X) {
+              dont_allow_horizontal_fov_change_until_new_width_received = desired_width;
+              image_provider_->SetHorizontalFOVWidth(desired_width);
+              LOG_TRACE("Change horizontal FOV width based on min_x {} max_x {}, current_width {}, desired_width {}",
+                        min_x, max_x, current_width, desired_width);
+            } else if (allow) {
+              dont_allow_horizontal_fov_change_until_new_width_received = std::nullopt;
+            }
+          } else {
+            dont_allow_horizontal_fov_change_until_new_width_received = std::nullopt;
+          }
+        }
+      }
+
       if (++frames_since_gain_change_ > 100 && profile.suggested_gain_change.has_value()) {
         image_provider_->AdjustGain(profile.suggested_gain_change.value());
         frames_since_gain_change_ = 0;
@@ -316,6 +367,20 @@ void ScannerImpl::ImageGrabbed(std::unique_ptr<image::Image> image) {
 
     std::chrono::duration<double> const duration_seconds = std::chrono::steady_clock::now() - start_timstamp;
     metrics_.image_processing_time->Observe(duration_seconds.count());
+
+    // Update FPS gauge based on capture timestamps
+    try {
+      auto ts = image->GetTimestamp();
+      if (previous_capture_timestamp_.has_value()) {
+        auto dt = std::chrono::duration_cast<std::chrono::duration<double>>(ts - previous_capture_timestamp_.value());
+        if (dt.count() > 0.0 && dt.count() < 5.0) {
+          metrics_.camera_fps->Set(1.0 / dt.count());
+        }
+      }
+      previous_capture_timestamp_ = ts;
+    } catch (...) {
+      // ignore
+    }
   });
 }
 

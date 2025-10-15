@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <vector>
 
 #include "common/messages/scanner.h"
@@ -44,6 +45,9 @@ class ScannerClientImpl : public ScannerClient {
   kinematics::KinematicsClient* kinematics_client_;
   bool started_;
   lpcs::Slice scanner_data_in_process_ = {};
+  // For latency measurement: timestamp when SliceData arrived and when GetSlidesPosition was requested
+  std::optional<std::uint64_t> last_slice_timestamp_ = std::nullopt;
+  std::optional<std::chrono::system_clock::time_point> last_get_position_request_time_ = std::nullopt;
   double joint_tolerance_upper_width_{};
   double joint_tolerance_surface_angle_{};
   double joint_tolerance_wall_angle_{};

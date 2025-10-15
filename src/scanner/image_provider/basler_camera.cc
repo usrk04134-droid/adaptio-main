@@ -173,10 +173,14 @@ void BaslerCamera::ResetFOVAndGain() {
     return;
   }
   camera_->StopGrabbing();
+  // Reset vertical and horizontal ROI to calibrated FOV
+  camera_->OffsetX.SetValue(fov_.offset_x);
+  camera_->Width.SetValue(fov_.width);
   camera_->OffsetY.SetValue(0);
   camera_->Height.SetValue(fov_.height);
   camera_->OffsetY.SetValue(fov_.offset_y);
   camera_->Gain.SetValue(initial_gain_);
+  horizontal_width_override_ = 0;
   camera_->StartGrabbing(EGrabStrategy::GrabStrategy_LatestImageOnly, EGrabLoop::GrabLoop_ProvidedByInstantCamera);
 }
 
@@ -194,6 +198,31 @@ void BaslerCamera::SetVerticalFOV(int offset_from_top, int height) {
   camera_->StartGrabbing(EGrabStrategy::GrabStrategy_LatestImageOnly, EGrabLoop::GrabLoop_ProvidedByInstantCamera);
   LOG_TRACE("Continuous grabbing restarted with offset {} and height {}.", fov_.offset_y + offset_from_top, height);
 };
+
+void BaslerCamera::SetHorizontalFOVWidth(int width) {
+  if (!camera_) {
+    return;
+  }
+  camera_->StopGrabbing();
+  // Keep OffsetX fixed to calibrated fov_.offset_x; only adjust Width.
+  if (width <= 0 || width > fov_.width) {
+    width = fov_.width;
+  }
+  camera_->Width.SetValue(width);
+  horizontal_width_override_ = width;
+  camera_->OffsetX.SetValue(fov_.offset_x);
+  camera_->StartGrabbing(EGrabStrategy::GrabStrategy_LatestImageOnly, EGrabLoop::GrabLoop_ProvidedByInstantCamera);
+  LOG_TRACE("Continuous grabbing restarted with width {} (offset_x fixed at {}).", width, fov_.offset_x);
+}
+
+auto BaslerCamera::GetHorizontalFOVWidth() -> int {
+  if (!camera_) {
+    return horizontal_width_override_ > 0 ? horizontal_width_override_ : fov_.width;
+  }
+  return static_cast<int>(camera_->Width.GetValue());
+}
+
+auto BaslerCamera::GetMaxHorizontalFOVWidth() -> int { return fov_.width; }
 
 void BaslerCamera::AdjustGain(double factor) {
   if (!camera_) {
