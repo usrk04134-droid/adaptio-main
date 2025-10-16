@@ -24,6 +24,9 @@ struct JointSlice {
   uint64_t processing_time;
   int vertical_crop_start;
   bool approximation_used;
+  // Final ROI applied on this image
+  int roi_width_pixels{0};
+  int roi_height_pixels{0};
 };
 
 class JointBuffer {

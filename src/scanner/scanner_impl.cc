@@ -226,6 +226,13 @@ void ScannerImpl::ImageGrabbed(std::unique_ptr<image::Image> image) {
         slice.centroids  = centroids_wcs;
       }
 
+      // Populate finalized ROI size after any ROI adjustments this frame
+      int roi_h = image->Data().rows();
+      int roi_w = image_provider_->GetHorizontalFOVWidth() > 0 ? image_provider_->GetHorizontalFOVWidth()
+                                                               : image->Data().cols();
+      slice.roi_height_pixels = roi_h;
+      slice.roi_width_pixels  = roi_w;
+
       m_buffer_mutex.lock();
       slice_provider_->AddSlice(slice);
       m_buffer_mutex.unlock();
