@@ -186,6 +186,12 @@ auto CameraSimulation::GetVerticalFOVOffset() -> int { return offset_; };
 
 auto CameraSimulation::GetVerticalFOVHeight() -> int { return height_; };
 
+void CameraSimulation::SetHorizontalFOVWidth(int width) { width_override_ = width; }
+
+auto CameraSimulation::GetHorizontalFOVWidth() -> int { return width_override_ > 0 ? width_override_ : 0; }
+
+auto CameraSimulation::GetMaxHorizontalFOVWidth() -> int { return 0; }
+
 auto CameraSimulation::GetImage()
     -> std::tuple<std::optional<std::unique_ptr<scanner::image::Image>>, std::optional<uint32_t>> {
   using cv::COLOR_RGB2GRAY;

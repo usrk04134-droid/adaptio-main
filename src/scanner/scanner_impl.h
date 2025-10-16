@@ -19,9 +19,12 @@
 
 namespace scanner {
 
-auto const WINDOW_MARGIN      = 100;
-auto const MOVE_MARGIN        = 40;
-auto const MINIMUM_FOV_HEIGHT = 500;
+auto const WINDOW_MARGIN       = 100;
+auto const MOVE_MARGIN         = 40;
+auto const MINIMUM_FOV_HEIGHT  = 500;
+auto const WINDOW_MARGIN_X     = 100;
+auto const MOVE_MARGIN_X       = 40;
+auto const MINIMUM_FOV_WIDTH   = 500;
 
 using LaserCallback = std::function<void(bool state)>;
 using Timestamp     = std::chrono::time_point<std::chrono::high_resolution_clock>;
@@ -78,8 +81,10 @@ class ScannerImpl : public Scanner {
   size_t num_received   = 0;
   Timestamp latest_sent = std::chrono::high_resolution_clock::now();
   std::optional<std::tuple<int, int>> dont_allow_fov_change_until_new_dimensions_received;
+  std::optional<int> dont_allow_horizontal_fov_change_until_new_width_received;
   size_t frames_since_gain_change_ = 0;
   bool store_image_data_;
+  std::optional<Timestamp> previous_capture_timestamp_;
 
   std::optional<joint_model::JointProperties> updated_properties_;
 
@@ -88,6 +93,7 @@ class ScannerImpl : public Scanner {
     std::map<uint64_t, prometheus::Counter*> image;
     prometheus::Histogram* image_processing_time;
     prometheus::Gauge* image_consecutive_errors;
+    prometheus::Gauge* camera_fps;
   } metrics_;
 };
 

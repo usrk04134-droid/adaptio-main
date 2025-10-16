@@ -166,6 +166,8 @@ struct JointProfile {
   std::tuple<int, int> vertical_limits        = {0, 0};
   std::optional<double> suggested_gain_change = std::nullopt;
   bool approximation_used                     = false;
+  // Optional horizontal guidance; if available, row(0)[0]..row(0)[6] projections to image space
+  // are used at call sites to size horizontal ROI. No persistence required here.
   auto LeftDepth() const -> double { return points[0].y - points[1].y; };
   auto RightDepth() const -> double { return points[6].y - points[5].y; };
 };

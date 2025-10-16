@@ -35,6 +35,10 @@ class ImageProvider {
   virtual void AdjustGain(double factor)                       = 0;
   virtual auto GetVerticalFOVOffset() -> int                   = 0;
   virtual auto GetVerticalFOVHeight() -> int                   = 0;
+  // Horizontal ROI control (width-only; OffsetX remains fixed by calibration)
+  virtual void SetHorizontalFOVWidth(int width) = 0;
+  virtual auto GetHorizontalFOVWidth() -> int   = 0;
+  virtual auto GetMaxHorizontalFOVWidth() -> int = 0;
   virtual auto GetSerialNumber() -> std::string                = 0;
 };
 

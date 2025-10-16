@@ -65,6 +65,9 @@ class BaslerCamera : public ImageProvider {
   void AdjustGain(double factor) override;
   auto GetVerticalFOVOffset() -> int override;
   auto GetVerticalFOVHeight() -> int override;
+  void SetHorizontalFOVWidth(int width) override;
+  auto GetHorizontalFOVWidth() -> int override;
+  auto GetMaxHorizontalFOVWidth() -> int override;
   auto GetSerialNumber() -> std::string override;
   void SetOnImage(OnImage on_image) override { on_image_ = on_image; };
 
@@ -80,6 +83,7 @@ class BaslerCamera : public ImageProvider {
   BaslerConfig config_;
   Fov fov_;
   int vertical_crop_offset_ = 0;
+  int horizontal_width_override_ = 0;  // 0 means use fov_.width
   OnImage on_image_;
 
   double initial_gain_ = 0.0;
